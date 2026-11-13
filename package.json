@@ -1,15 +1,16 @@
 {
-  "name": "premiere",
+  "name": "drifthome",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "DRIFTHOME: a cozy 3D space-exploration game (three.js).",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/playtest_collision.mjs && node tests/golden_runs.mjs",
+    "run": "node run.mjs"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Matthew \"Frog\" Finley",
+  "license": "UNLICENSED",
   "dependencies": {
     "three": "^0.186.1"
-  }
+  },
+  "private": true
 }
