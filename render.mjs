@@ -350,5 +350,13 @@ export function createRenderer(canvas, W, H, seed = 1, opt = {}) {
     Object.assign(fc, { idx: tgt ? 1 : -1, tick, room, view: 'follow' });
     cam.position.copy(fc.pos); cam.lookAt(P[0], aimY, P[2]);
   }
-  return { render, placeCam, renderer: r, scene, camera: cam, bolt, get space() { return space; }, setDebug(v) { dbg.visible = !!v; return dbg.visible; }, get debug() { return dbg.visible; }, camStats: () => ({ cuts: fc.cuts, roomCuts: fc.roomCuts, pulls: fc.pulls, fixed: fc.fixed, capped: fc.capped, idx: fc.idx, room: fc.room, why: fc.why, tgt: fc.tgt && fc.tgt.map(v => +v.toFixed(2)) }) /* why: what moved the camera this frame (occ/retarget/hit/pitch/rings), for the tests */ };
+  // window resize (free play): new drawing-buffer size, aspect and the same portrait/landscape FOV rules as at start.
+  // The exterior camera keeps its own FOV rule (space.mjs); its 9:16 framing offsets are still chosen once, at creation.
+  function resize(w, h) {
+    if (!(w > 0 && h > 0) || (w === W && h === H)) return false; W = w; H = h; r.setSize(w, h, false);
+    cam.aspect = w / h; cam.fov = w < h ? 62 : 58; cam.updateProjectionMatrix();
+    if (space) { space.camera.aspect = w / h; space.camera.fov = w > h ? 55 : 68; space.camera.updateProjectionMatrix(); }
+    return true;
+  }
+  return { render, resize, placeCam, renderer: r, scene, camera: cam, bolt, get space() { return space; }, setDebug(v) { dbg.visible = !!v; return dbg.visible; }, get debug() { return dbg.visible; }, camStats: () => ({ cuts: fc.cuts, roomCuts: fc.roomCuts, pulls: fc.pulls, fixed: fc.fixed, capped: fc.capped, idx: fc.idx, room: fc.room, why: fc.why, tgt: fc.tgt && fc.tgt.map(v => +v.toFixed(2)) }) /* why: what moved the camera this frame (occ/retarget/hit/pitch/rings), for the tests */ };
 }

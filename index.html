@@ -28,7 +28,7 @@ body.photo #helpbtn,body.photo #helppanel{display:none!important}
 // &demo=1 plays the scripted seed pilot (as before). &manual=1 disables the RAF loop (window.dh drives ticks, for stills).
 // Capture mode (&capture=1, or window.cap present) hides the autopilot UI; capture.html itself never loads this page.
 import { reset, step, observe, state, DT } from './game.mjs'; import { makePilot, makeAutopilot, blendActions, HANDOFF_S } from './pilot.mjs'; import { createRenderer } from './render.mjs'; import * as THREE from './vendor/three.module.js';
-const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), W = +(q.get('w') || innerWidth), H = +(q.get('h') || innerHeight);
+const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), fixedSize = !!(q.get('w') || q.get('h')), W = +(q.get('w') || innerWidth), H = +(q.get('h') || innerHeight);
 const view = q.get('view') || 'follow', T = q.get('t'), hud = document.getElementById('hud'); if (q.get('hud') === '0') hud.remove();
 const scripted = T != null || q.get('demo') === '1', capture = q.get('capture') === '1' || !!window.cap;
 const btn = document.getElementById('apbtn'), label = document.getElementById('aplabel');
@@ -186,6 +186,8 @@ addEventListener('mousemove', (e) => { if (!pm.on) return; e.stopImmediatePropag
   pm.yaw -= e.movementX * 0.0025; pm.pitch = Math.max(-1.5, Math.min(1.5, pm.pitch - e.movementY * 0.0025)); }, true);
 addEventListener('wheel', (e) => { if (!pm.on) return; e.preventDefault(); pm.cam.fov = Math.max(12, Math.min(100, pm.cam.fov * Math.exp(e.deltaY * 0.001))); }, { capture: true, passive: false });
 addEventListener('resize', () => pm.on && pmGuide());
+// follow the window size unless ?w= / ?h= pinned it (stills, captures); photo mode re-renders, play shows the next frame
+if (!fixedSize) addEventListener('resize', () => { if (R.resize(innerWidth, innerHeight)) { if (pm.on) pmRender(); else show(); } });
 function pmTick(dt) { const k = (c) => (pm.keys.has(c) ? 1 : 0), sp = (pm.keys.has('ShiftLeft') || pm.keys.has('ShiftRight') ? 0.4 : 2.2) * dt;
   const v = new THREE.Vector3(k('KeyD') - k('KeyA'), 0, k('KeyS') - k('KeyW')); if (v.lengthSq()) pm.cam.position.add(v.normalize().applyQuaternion(pm.cam.quaternion).multiplyScalar(sp));
   pm.roll += (k('KeyE') - k('KeyQ')) * 1.2 * dt * (sp < 0.05 ? 0.3 : 1); pmRender(); }
