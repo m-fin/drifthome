@@ -76,7 +76,7 @@ function toggleHelp() { helpPanel.classList.toggle('show'); }
 helpBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHelp(); helpBtn.blur(); });
 // ---- player input
 const keys = new Set(); let yawCmd = null, floatReq = false, mouseYaw = 0, mousePitch = 0;
-const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft']);
+const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft', 'ShiftRight']);
 const DZ = 0.15;
 const padEdge = { y: false, a: false, menu: false, view: false };
 addEventListener('keydown', (e) => {
@@ -86,6 +86,8 @@ addEventListener('keydown', (e) => {
   if (MOVE_KEYS.has(e.code)) { disengage(); keys.add(e.code); if (e.code === 'KeyF' && !e.repeat) floatReq = true; e.preventDefault(); }
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
+// a key held while the window loses focus (alt-tab, a dialog, clicking another window) never sends keyup: Bolt kept walking
+addEventListener('blur', () => keys.clear()); document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
 addEventListener('mousemove', (e) => { if (e.target === btn || (!e.movementX && !e.movementY)) return; disengage(); mouseYaw -= e.movementX * 0.004; });
 addEventListener('mousedown', (e) => { if (e.target !== btn && e.target !== helpBtn) disengage(); });
 btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); btn.blur(); });
@@ -113,7 +115,7 @@ function gamepad() {
 }
 function playerAction(o, extra) {
   const k = (c) => (keys.has(c) ? 1 : 0), gp = extra === undefined ? gamepad() : extra;
-  let f = k('KeyW') - k('KeyS'), s = k('KeyD') - k('KeyA'), u = k('Space') - k('KeyC') - k('ShiftLeft');
+  let f = k('KeyW') - k('KeyS'), s = k('KeyD') - k('KeyA'), u = k('Space') - k('KeyC') - Math.max(k('ShiftLeft'), k('ShiftRight'));
   let mag = null, brake = 0; // mag: analog strength 0..1 (null = keyboard: full)
   if (gp) {
     // left stick: radial deadzone DZ, then proportional (was: per-axis deadzone and the move vector normalised, so a 30% push walked at 96%)
