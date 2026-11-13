@@ -1,0 +1,42 @@
+reach walk: cockpit true (5.25s), bed true (1.1s), window true (4.7667s)
+reach float: cockpit true (10.7s), bed true (3.4167s), window true (9.1333s)
+self-driving from bunk: hull overlap ticks 0, deepest mesh sink 0 m
+jitter plant/window-wall pocket walk [0,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket walk [0.5,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket walk [1,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket walk [-0.3,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket walk [1,0,0.3] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket walk [1.55,0,0.35] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket walk [1,0,0] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket walk [1,0,1] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket walk [0,0,1] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket walk [1,0,-0.3] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket float [0,0,1] max back 0.0002 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket float [0.5,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket float [1,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket float [-0.3,0,1] max back 0 m/tick, snaps>5mm 0
+jitter plant/window-wall pocket float [1,0,0.3] max back 0.0001 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket float [1.55,0,0.35] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket float [1,0,0] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket float [1,0,1] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket float [0,0,1] max back 0 m/tick, snaps>5mm 0
+jitter big-crate/corner pocket float [1,0,-0.3] max back 0 m/tick, snaps>5mm 0
+jitter regression: 20 pocket runs; grid scan 1506 runs, 0 bad
+push tests: 297 (each = push 3 s + back out 2 s), handoff cases: 36
+M1_seed1 wake@77 float_start@221 cockpit_reach@955 window_look@1619 hull_overlap_ticks=0 mesh_max=0
+M1_seed2 wake@79 float_start@228 cockpit_reach@948 window_look@1592 hull_overlap_ticks=0 mesh_max=0
+M1_seed3 wake@79 float_start@222 cockpit_reach@955 window_look@1597 hull_overlap_ticks=0 mesh_max=0
+M1_seed4 wake@84 float_start@234 cockpit_reach@952 window_look@1596 hull_overlap_ticks=0 mesh_max=0
+M1_seed5 wake@78 float_start@238 cockpit_reach@944 window_look@1593 hull_overlap_ticks=0 mesh_max=0
+M1_seed6 wake@74 float_start@217 cockpit_reach@952 window_look@1593 hull_overlap_ticks=0 mesh_max=0
+M1_seed7 wake@62 float_start@206 cockpit_reach@945 window_look@1592 hull_overlap_ticks=0 mesh_max=0
+M1_seed8 wake@65 float_start@222 cockpit_reach@932 window_look@1584 hull_overlap_ticks=0 mesh_max=0
+M2_seed1 wake@77 float_start@221 cockpit_reach@955 launch@1111 nebula_enter@1576 nebula_exit@3365 asteroid_field_enter@3397 asteroid_near_miss@4677 asteroid_field_exit@5148 planet_approach@5309 land@7320 liftoff@7531 dock@8388 cabin_enter@8563 window_look@9059 hull_overlap_ticks=0 mesh_max=0
+M2_seed2 wake@79 float_start@228 cockpit_reach@948 launch@1102 nebula_enter@1561 nebula_exit@3313 asteroid_field_enter@3345 asteroid_near_miss@4598 asteroid_field_exit@5060 planet_approach@5218 land@7199 liftoff@7410 dock@8261 cabin_enter@8436 window_look@8935 hull_overlap_ticks=0 mesh_max=0
+M2_seed3 wake@79 float_start@222 cockpit_reach@955 launch@1106 nebula_enter@1567 nebula_exit@3331 asteroid_field_enter@3362 asteroid_near_miss@4627 asteroid_field_exit@5093 planet_approach@5252 land@7246 liftoff@7457 dock@8311 cabin_enter@8486 window_look@8982 hull_overlap_ticks=0 mesh_max=0
+M2_seed4 wake@84 float_start@234 cockpit_reach@952 launch@1090 nebula_enter@1551 nebula_exit@3313 asteroid_field_enter@3344 asteroid_near_miss@4607 asteroid_field_exit@5072 planet_approach@5230 land@7221 liftoff@7432 dock@8285 cabin_enter@8460 window_look@8959 hull_overlap_ticks=0 mesh_max=0
+M2_seed5 wake@78 float_start@238 cockpit_reach@944 launch@1079 nebula_enter@1539 nebula_exit@3291 asteroid_field_enter@3323 asteroid_near_miss@4579 asteroid_field_exit@5042 planet_approach@5200 land@7184 liftoff@7395 dock@8246 cabin_enter@8421 window_look@8925 hull_overlap_ticks=0 mesh_max=0
+M2_seed6 wake@74 float_start@217 cockpit_reach@952 launch@1098 nebula_enter@1566 nebula_exit@3378 asteroid_field_enter@3411 asteroid_near_miss@4708 asteroid_field_exit@5186 planet_approach@5349 land@7380 liftoff@7591 dock@8452 cabin_enter@8627 window_look@9123 hull_overlap_ticks=0 mesh_max=0
+M2_seed7 wake@62 float_start@206 cockpit_reach@945 launch@1090 nebula_enter@1554 nebula_exit@3329 asteroid_field_enter@3363 asteroid_near_miss@4633 asteroid_field_exit@5101 planet_approach@5260 land@7261 liftoff@7472 dock@8327 cabin_enter@8502 window_look@8999 hull_overlap_ticks=0 mesh_max=0
+M2_seed8 wake@65 float_start@222 cockpit_reach@932 launch@1079 nebula_enter@1542 nebula_exit@3315 asteroid_field_enter@3347 asteroid_near_miss@4614 asteroid_field_exit@5081 planet_approach@5240 land@7237 liftoff@7448 dock@8302 cabin_enter@8477 window_look@8979 hull_overlap_ticks=0 mesh_max=0
+1113/1113 checks passed

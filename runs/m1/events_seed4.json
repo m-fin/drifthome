@@ -1,0 +1,60 @@
+{
+ "seed": 4,
+ "milestone": "M1",
+ "ticks": 2256,
+ "duration_s": 37.6,
+ "events": [
+  {
+   "t_s": 1.4,
+   "tick": 84,
+   "type": "wake",
+   "detail": {
+    "room": "cabin"
+   }
+  },
+  {
+   "t_s": 3.9,
+   "tick": 234,
+   "type": "float_start",
+   "detail": {
+    "pos": [
+     -2.87,
+     0.53,
+     1.36
+    ]
+   }
+  },
+  {
+   "t_s": 15.8667,
+   "tick": 952,
+   "type": "cockpit_reach",
+   "detail": {
+    "pos": [
+     0,
+     1.21,
+     -6.4
+    ]
+   }
+  },
+  {
+   "t_s": 26.6,
+   "tick": 1596,
+   "type": "window_look",
+   "detail": {
+    "pos": [
+     4.6,
+     2.14,
+     -0.36
+    ]
+   }
+  },
+  {
+   "t_s": 37.6,
+   "tick": 2256,
+   "type": "run_end",
+   "detail": {
+    "hold_after_window_look_s": 11
+   }
+  }
+ ]
+}

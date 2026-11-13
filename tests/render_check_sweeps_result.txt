@@ -1,0 +1,49 @@
+new door_wall_oblique 129 0
+new door_wall_left 316 1
+new door_wall_straight 84 0
+new window_wall 86 0
+new wide_ep1 147 0
+new floor_rug_grazing 174 0
+new cockpit_view 183 2
+new cockpit_back_to_door 187 1
+new lintel_close_cabin 98 2
+new lintel_close_cockpit 33 1
+old door_wall_oblique 129 0
+old door_wall_left 316 1
+old door_wall_straight 84 0
+old window_wall 86 0
+old wide_ep1 147 0
+old floor_rug_grazing 174 0
+old cockpit_view 183 2
+old cockpit_back_to_door 187 1
+old lintel_close_cabin 98 2
+old lintel_close_cockpit 33 1
+wrote /workspace/crave-lab/games/premiere/tests/render_check_result.json
+contract undefined
+stills undefined
+== new
+door_wall_oblique      zfight flips 129 (0.0071%) | lit shimmer 0 | top: Box c[0.00,-0.10,0.00] s[12.00,0.20,10.00] <> Box c[6.10,3.70,0.00] s[0.20,0.60,10.00]
+door_wall_left         zfight flips 316 (0.0174%) | lit shimmer 1 | top: Box c[6.10,2.20,4.00] s[0.20,2.40,2.00] <> Box c[6.00,2.20,0.00] s[0.30,2.40,0.12]
+door_wall_straight     zfight flips 84 (0.0046%) | lit shimmer 0 | top: Box c[-4.60,0.75,4.40] s[1.00,0.20,0.60] <> Box c[-4.80,0.40,-4.00] s[0.80,0.80,0.80]
+window_wall            zfight flips 86 (0.0047%) | lit shimmer 0 | top: Box c[0.00,-0.10,0.00] s[12.00,0.20,10.00] <> Box c[6.10,3.70,0.00] s[0.20,0.60,10.00]
+wide_ep1               zfight flips 147 (0.0081%) | lit shimmer 0 | top: Box c[0.00,-0.10,0.00] s[12.00,0.20,10.00] <> Box c[0.00,4.10,0.00] s[12.00,0.20,10.00]
+floor_rug_grazing      zfight flips 174 (0.0096%) | lit shimmer 0 | top: Box c[6.10,0.50,0.00] s[0.20,1.00,10.00] <> Box c[6.10,2.20,4.00] s[0.20,2.40,2.00]
+cockpit_view           zfight flips 183 (0.0101%) | lit shimmer 2 | top: Box c[2.00,0.40,3.30] s[0.08,0.80,0.08] <> Box c[-3.10,1.50,-7.05] s[0.20,3.00,3.90]
+cockpit_back_to_door   zfight flips 187 (0.0103%) | lit shimmer 1 | top: Box c[2.50,0.80,3.60] s[1.40,0.08,0.90] <> Box c[0.00,-0.10,-7.00] s[6.00,0.20,4.00]
+lintel_close_cabin     zfight flips 98 (0.0054%) | lit shimmer 2 | top: Box c[6.00,2.20,0.00] s[0.30,2.40,0.12] <> Extrude c[0.00,2.00,-5.10] s[12.00,4.00,0.20]
+lintel_close_cockpit   zfight flips 33 (0.0018%) | lit shimmer 1 | top: Extrude c[0.00,2.00,-5.10] s[12.00,4.00,0.20] <> Box c[-1.05,1.29,-5.10] s[0.15,2.58,0.35]
+errors [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)'
+]
+== old
+door_wall_oblique      zfight flips 129 (0.0071%) | lit shimmer 0 | top: Box c[0.00,-0.10,0.00] s[12.00,0.20,10.00] <> Box c[6.10,3.70,0.00] s[0.20,0.60,10.00]
+door_wall_left         zfight flips 316 (0.0174%) | lit shimmer 1 | top: Box c[6.10,2.20,4.00] s[0.20,2.40,2.00] <> Box c[6.00,2.20,0.00] s[0.30,2.40,0.12]
+door_wall_straight     zfight flips 84 (0.0046%) | lit shimmer 0 | top: Box c[-4.60,0.75,4.40] s[1.00,0.20,0.60] <> Box c[-4.80,0.40,-4.00] s[0.80,0.80,0.80]
+window_wall            zfight flips 86 (0.0047%) | lit shimmer 0 | top: Box c[0.00,-0.10,0.00] s[12.00,0.20,10.00] <> Box c[6.10,3.70,0.00] s[0.20,0.60,10.00]
+wide_ep1               zfight flips 147 (0.0081%) | lit shimmer 0 | top: Box c[0.00,-0.10,0.00] s[12.00,0.20,10.00] <> Box c[0.00,4.10,0.00] s[12.00,0.20,10.00]
+floor_rug_grazing      zfight flips 174 (0.0096%) | lit shimmer 0 | top: Box c[6.10,0.50,0.00] s[0.20,1.00,10.00] <> Box c[6.10,2.20,4.00] s[0.20,2.40,2.00]
+cockpit_view           zfight flips 183 (0.0101%) | lit shimmer 2 | top: Box c[2.00,0.40,3.30] s[0.08,0.80,0.08] <> Box c[-3.10,1.50,-7.05] s[0.20,3.00,3.90]
+cockpit_back_to_door   zfight flips 187 (0.0103%) | lit shimmer 1 | top: Box c[2.50,0.80,3.60] s[1.40,0.08,0.90] <> Box c[0.00,-0.10,-7.00] s[6.00,0.20,4.00]
+lintel_close_cabin     zfight flips 98 (0.0054%) | lit shimmer 2 | top: Box c[6.00,2.20,0.00] s[0.30,2.40,0.12] <> Extrude c[0.00,2.00,-5.10] s[12.00,4.00,0.20]
+lintel_close_cockpit   zfight flips 33 (0.0018%) | lit shimmer 1 | top: Extrude c[0.00,2.00,-5.10] s[12.00,4.00,0.20] <> Box c[-1.05,1.29,-5.10] s[0.15,2.58,0.35]
+errors []

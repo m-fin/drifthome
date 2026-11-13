@@ -1,0 +1,27 @@
+# deps / builds
+node_modules/
+out/
+dist/
+# renders & captures (large)
+stills/
+videos/
+*.mp4
+*.mov
+*.wav
+*.tar
+*.tgz
+*.zip
+# backups
+*.bak*
+bak-*/
+runs/bak-*/
+# secrets
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+*.cer
+# OS
+.DS_Store

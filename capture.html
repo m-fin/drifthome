@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas><script type="module">
+// Frame-locked capture page, driven by capture.mjs. window.cap.init(seed,W,H,events) then window.cap.frame() = 2 sim ticks + 1 render.
+import { reset, step, observe, state } from './game.mjs'; import { makePilot } from './pilot.mjs'; import { createRenderer } from './render.mjs'; import { m2View } from './director.mjs';
+let R, act, o, ev, nf = 0, lastView = null; const SHADOW_EVERY = 2; // capture-only speedup: refresh cabin shadow maps every 2nd frame (15 Hz). Was 6 (5 Hz): Bolt's shadow on the walls/floor jumped every 0.2 s.
+import { EXTERIOR } from './director.mjs';
+const shadowTick = (vv) => { const sw = lastView !== null && EXTERIOR.has(vv) !== EXTERIOR.has(lastView); lastView = vv; return sw; }; // also refresh on every interior<->exterior switch (stale cabin shadows after flight)
+// director (director.mjs): M1 runs keep the old cabin cuts; M2 adds launch/nebula/near-miss/approach/landed/docked cameras.
+// A log with milestone "M1" (or no launch event) replays the cabin-only sim, so Ep1 re-captures stay identical.
+const view = () => m2View(o, ev);
+window.cap = {
+  init(seed, W, H, events, milestone) { ev = events; const m1 = milestone === 'M1' || !events.some(e => e.type === 'launch'); R = createRenderer(document.getElementById('c'), W, H, seed); R.renderer.shadowMap.autoUpdate = false; R.renderer.shadowMap.needsUpdate = true; reset(seed, { m1 }); act = makePilot(state()); o = observe(); R.render(o, view()); return { jpg: document.getElementById('c').toDataURL('image/jpeg', 0.92).slice(23), tick: 0, t_s: 0 }; },
+  // stills: step the sim to tick N (no rendering in between), render once with a given or directed view, return a PNG
+  still(tick, v, type = 'image/png') { while (o.tick < tick) o = step(act(o)).obs; R.renderer.shadowMap.needsUpdate = true; const vv = v || view(); R.render(o, vv); return { png: document.getElementById('c').toDataURL(type).split(',')[1], tick: o.tick, t_s: o.t_s, view: vv, ship: o.ship.mode }; },
+  frame(ticks = 2) { for (let i = 0; i < ticks; i++) o = step(act(o)).obs; const vv = view(); if (++nf % SHADOW_EVERY === 0 || shadowTick(vv)) R.renderer.shadowMap.needsUpdate = true; else lastView = vv; R.render(o, vv); const jpg = document.getElementById('c').toDataURL('image/jpeg', 0.92).slice(23); return { jpg, tick: o.tick, t_s: o.t_s, view: vv, pos: o.pos, last: (o.log.at(-1) || {}).type }; },
+};
+document.title = 'CAPREADY';
+</script></body></html>

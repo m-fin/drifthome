@@ -1,0 +1,7 @@
+# v3 progress (Builder). Checkpoint log, newest last. Times ET.
+- DONE 11:40-12:31: Polish ring blocker (rings in camera LOS + 0.45 m round keep-out), door-wall wedge (slab castShadow=false + 3 shadow-only 2 cm sheets at the cockpit face, |x|<=2.95). Shimmer: SHADOW_EVERY left at 2 (+8% cost, only ~13% less flicker).
+- DONE 12:36-13:14 (Captain scope): free-play camera: occlusion grace (ease to the clear spot nearest the camera, quicker spring, up to 0.8 s, then cut), pitch cap 55 deg, fixedCam prefers <= 50 deg. game.mjs cockpit max z -5.2. index.html dh.cam (test hook). tests/freeplay_cam_check.mjs (new), playtest_collision I, cam_check track diff (--ref).
+- DONE 13:15: bundles rebuilt once (M2 1a6ca093a04eab33b66946ef77c39a9e83750bc2b6ed10c79fb12ef7fb4727e1, Ep1 4e02da9aa09584f348abae5f55120aa36dae124c042ebbae5a45e1c17dd6faa9), offline validation self_sim_matches_log true. Logs M1+M2 seeds 1-8 re-run: byte-identical to runs/bak-v3 (no change).
+- DONE: playtest_collision 1122/1122, gamepad 15/15, cam_check (capture track == v3 ring build, 0 frames differ), render_check sweeps (rc4, 13:15-13:2x) EXIT 0, PLAN/README/M2_CAPTURE_PLAN updated with the shas.
+- DONE 13:27: contract on the 13:15 bundles OK (m2b + m1b, no errors, Ep1 m1=true); rc4 sweeps saved (identical to v2); final stills in stills/collision.
+- DONE 13:37: final freeplay run on the bundled render.mjs: 0 re-frames on all 6 routes, min clearance 0.184 m, max pitch 55 deg (tests/freeplay_cam_check_result.txt). No leftover Chrome/servers of mine. v3 COMPLETE; only reporting left.

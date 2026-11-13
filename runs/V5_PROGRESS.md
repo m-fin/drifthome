@@ -1,0 +1,27 @@
+# V5 progress (free play only)
+- 15:47 DONE backups: v4 tars -> /workspace/crave-lab/backups/*-v4-FINAL.tar (hashes verified); *.bak-v5; runs/bak-v5 logs; v4 tree ref /tmp/v4final
+- ~15:48 IN PROGRESS: freeplay_cam_check + routes float_FL/high_FL/float_BL/high_BL/walk_FR (Polish corner_check routes), hold push, --only list; v4 baseline run
+- ~15:52 IN PROGRESS: render.mjs FREE: swingSpot helper; HEAD_SOFT 1.3 m eased swing (<=0.18 m/frame) + spring re-sync; HEAD_MIN floor fallback = nearest clear spot before the ceiling raise
+- 15:58 IN PROGRESS: easeTo (whole-frame move <= 0.18 m, growth <= 0.02 m/tick) for both FREE swings; HEAD_SOFT 1.6. Steering 15:58: + Playtest 14:52 findings (plant-turn judder, 75 deg whip, head crop, 55 deg hold); do NOT touch out/capture_m1|m2 (v5 test bundle -> out/v5_check/)
+- ~16:00 DONE freeplay_cam_check: + plant_turn route (spin seg) + judder/maxPan02_deg/headTopOut_s metrics. Measuring v4 (/tmp/v4final) vs current
+- ~16:05 IN PROGRESS: easeTo = arc around Bolt (<=2 deg/tick, ramp 0.25 deg/tick/frame, r/h <=5 cm/tick) + swung spot becomes fc.tgt with SW_LOCK 60-tick hysteresis (LOS-checked)
+- ~16:10 IN PROGRESS: FREE pitch block restructured (aim 45 deg spot, arc ease, hysteresis to <=49 deg, pitchOn); soft swing hysteresis (softOn, +0.25 m); capture branch kept verbatim under !FREE
+- ~16:15 IN PROGRESS: tuned (swing starts 50 deg, aims 42, off at 46; arc 1->3 deg/tick; swing frames capped 0.2 m; fixed a //-comment swallowing a const, again). Seed-1 capture identity vs v4: 0 diff. Measuring v4 baseline with new metrics
+- ~16:24 DONE tuning: bearing rate cap 2.5 deg/tick for both swings (arc + chord), trapezoid ease-out, pitch swing 50->43 hysteresis. Short routes: plant_turn judder 10/s->0; FL head 0.54->1.24; BL 1.16->1.56; corner_walk pan 94.8->43.1, capHold 0.47->0. RUNNING full freeplay new vs /tmp/v4final -> tests/freeplay_cam_check_result.txt
+- (times above approximate; corrected 16:49)
+- 16:36 full freeplay rc1 done (/tmp/v4/fp_full_rc1.txt): float_tour regressed at 114 s (head 0.83, step 0.387). Fix 1: no bearing cap on the head swing when within 1.3 m -> float_tour head 0.94 (v4 1.43), still short.
+- ~16:46 Fix 2 applied (interrupted before testing): swingSpot penalises spots on the side Bolt is moving toward (fc.vel, FREE only).
+- 16:49 RESUMED after interruption: inspected tree; render.mjs syntax OK with fix 2; v4 tars in capture_m1/m2 + mac_v4 unchanged (sha checked). NEXT: test fix 2 on float_tour/FL/BL/plant_turn.
+- 16:55 IN PROGRESS: fix 2 alone = no change (float_tour 0.937). Fix 3: soft swing spots by 3-D distance 1.8 m from his head (higher spots may be closer horizontally, <= 48 deg), + height _t.y+1.4. Testing
+- 17:00 DONE fix 3: float_tour head 0.937->1.392, share 0.996->0.416, capHold 0; FL/BL/plant_turn same or better (plant pan 30->13.8). RUNNING full freeplay new vs /tmp/v4final (final candidate rc2)
+- 17:18 DONE full freeplay (tests/freeplay_cam_check_result.txt, 14 routes x v4/v5). NEXT: identity seeds 1-8 vs v4, logs, suites
+- 17:25 IN PROGRESS: full run showed new judder at seat (10/s) + corner_walk (12/s): soft swing hysteresis band (1.85 m) above its own spot (1.8 m) kept it on, fighting the occlusion retarget. Spot now 1.9 m, stop at 1.75 m. Re-testing
+- 17:31 rc3 saved (/tmp/v4/render_v5_rc3.mjs; seat judder fixed). Trying pitch swing start 46 / stop 41 / aim 38 for corner_walk 62 deg
+- 17:35 rc4 = final candidate (swing 46/41/38): corner_walk pitch 62.2->56.3, cabin_walk_tour 61.7->56.1, plant_turn 0 judder. RUNNING final full freeplay vs /tmp/v4final
+- 17:39 RESUMED (2nd interruption): render.mjs == rc4; final freeplay run still running (20/28 rows, pid 2226813); v4 tars unchanged. Not a git repo (state via .bak-v5 diffs).
+- 17:42 DONE final freeplay (rc4): tests/freeplay_cam_check_result.txt + tests/freeplay_v4_vs_v5_table.txt. NEXT: identity 32 runs vs v4
+- 17:44 DONE capture_cam_identity vs /tmp/v4final: 32/32 runs, 0 frames differ (tests/capture_cam_identity_result.txt). NEXT: logs + light suites
+- 17:45 DONE logs 16/16 byte-identical to runs/bak-v5; playtest_collision 1122/1122; gamepad 15/15. NEXT: cam_check + render_check vs v4
+- ~17:45 DONE cam_check vs v4: 8/8 tracks 0 frames differ; render_check sweeps 10/10 identical to v4. NEXT: a few FL stills (Polish corner_check.py, --save) + docs
+- ~17:46 DONE stills: Polish corner_check.py --root v4/v5 float_FL -> stills/v5/{v4,v5}/ + float_FL_13.77_v4_left_v5_right.jpg (harness: head 0.54 -> 1.243 m). NEXT: docs
+- 17:47 DONE docs (PLAN v5 bullet, README freeplay row, M2_CAPTURE_PLAN note: bundles not rebuilt). Final sha256: render.mjs d465cef0e963cf5890743f5d1b74e48f22d19fce02fb59f2df23f05b60adebbb; tests/freeplay_cam_check.mjs a398f8cd0bc2c28657f631799e40ca9b8b78255d9ddcc341c53d9491bf6794bc. v4 tars (capture_m1/m2, mac_v4, backups/*-v4-FINAL) re-verified unchanged (mtime 14:50). No v5 bundle built (identity test runs on the tree; make_*_bundle.py writes into out/capture_*, so not run). No Chrome/servers of mine left (Chrome pid 2247133 belongs to another worker's diag/trace.mjs; http.server :8777 another agent's). v5 COMPLETE.

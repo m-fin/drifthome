@@ -1,0 +1,187 @@
+{
+ "seed": 1,
+ "milestone": "M2",
+ "ticks": 9299,
+ "duration_s": 154.9833,
+ "events": [
+  {
+   "t_s": 1.2833,
+   "tick": 77,
+   "type": "wake",
+   "detail": {
+    "room": "cabin"
+   }
+  },
+  {
+   "t_s": 3.6833,
+   "tick": 221,
+   "type": "float_start",
+   "detail": {
+    "pos": [
+     -3.17,
+     0.53,
+     1.38
+    ]
+   }
+  },
+  {
+   "t_s": 15.9167,
+   "tick": 955,
+   "type": "cockpit_reach",
+   "detail": {
+    "pos": [
+     0,
+     1.21,
+     -6.4
+    ]
+   }
+  },
+  {
+   "t_s": 18.5167,
+   "tick": 1111,
+   "type": "launch",
+   "detail": {
+    "from": "hearth_dock",
+    "pos": [
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "t_s": 26.2667,
+   "tick": 1576,
+   "type": "nebula_enter",
+   "detail": {
+    "pos": [
+     0,
+     4.3,
+     -142.2
+    ],
+    "speed_mps": 56.3
+   }
+  },
+  {
+   "t_s": 56.0833,
+   "tick": 3365,
+   "type": "nebula_exit",
+   "detail": {
+    "pos": [
+     -3.9,
+     9.3,
+     -1579.1
+    ]
+   }
+  },
+  {
+   "t_s": 56.6167,
+   "tick": 3397,
+   "type": "asteroid_field_enter",
+   "detail": {
+    "pos": [
+     -5.4,
+     8.5,
+     -1600.7
+    ],
+    "speed_mps": 40.3
+   }
+  },
+  {
+   "t_s": 77.95,
+   "tick": 4677,
+   "type": "asteroid_near_miss",
+   "detail": {
+    "asteroid": "tumbler",
+    "clearance_m": 5.54,
+    "speed_mps": 36.6
+   }
+  },
+  {
+   "t_s": 85.8,
+   "tick": 5148,
+   "type": "asteroid_field_exit",
+   "detail": {
+    "pos": [
+     14.6,
+     -9.5,
+     -2720.2
+    ]
+   }
+  },
+  {
+   "t_s": 88.4833,
+   "tick": 5309,
+   "type": "planet_approach",
+   "detail": {
+    "planet": "Ember",
+    "pad_dist_m": 899,
+    "speed_mps": 46.3
+   }
+  },
+  {
+   "t_s": 122,
+   "tick": 7320,
+   "type": "land",
+   "detail": {
+    "pad": "ember_pad",
+    "touchdown_mps": 0.71,
+    "offset_m": 0.04
+   }
+  },
+  {
+   "t_s": 125.5167,
+   "tick": 7531,
+   "type": "liftoff",
+   "detail": {
+    "pos": [
+     150,
+     -136.2,
+     -3720
+    ]
+   }
+  },
+  {
+   "t_s": 139.8,
+   "tick": 8388,
+   "type": "dock",
+   "detail": {
+    "station": "sky_dock",
+    "closing_mps": 0.81,
+    "miss_m": 0.79
+   }
+  },
+  {
+   "t_s": 142.7167,
+   "tick": 8563,
+   "type": "cabin_enter",
+   "detail": {
+    "pos": [
+     0,
+     1.18,
+     -5
+    ]
+   }
+  },
+  {
+   "t_s": 150.9833,
+   "tick": 9059,
+   "type": "window_look",
+   "detail": {
+    "pos": [
+     4.6,
+     2.14,
+     -0.48
+    ]
+   }
+  },
+  {
+   "t_s": 154.9833,
+   "tick": 9299,
+   "type": "run_end",
+   "detail": {
+    "hold_after_window_look_s": 4
+   }
+  }
+ ]
+}

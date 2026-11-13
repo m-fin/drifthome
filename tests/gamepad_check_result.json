@@ -1,0 +1,80 @@
+{
+ "new": {
+  "updown": {
+   "mode": "float",
+   "keyboard_space_0p8s": 0.567,
+   "RB_up_0p8s": 0.567,
+   "LB_down_0p8s": -0.567,
+   "dpad_up": 0.567,
+   "dpad_down": -0.567
+  },
+  "reach": {
+   "handhold_0": {
+    "reached": true,
+    "s": 2.3,
+    "closest": 0.859
+   },
+   "handhold_1": {
+    "reached": true,
+    "s": 3.1,
+    "closest": 0.865
+   },
+   "handhold_2": {
+    "reached": true,
+    "s": 4.5,
+    "closest": 0.885
+   },
+   "handhold_3": {
+    "reached": true,
+    "s": 4.1,
+    "closest": 0.861
+   },
+   "handhold_4": {
+    "reached": true,
+    "s": 4.9,
+    "closest": 0.85
+   },
+   "handhold_5": {
+    "reached": true,
+    "s": 8.4,
+    "closest": 0.892
+   },
+   "lamp_0": {
+    "reached": true,
+    "s": 1.3,
+    "closest": 0.052
+   },
+   "lamp_1": {
+    "reached": true,
+    "s": 4.2,
+    "closest": 0.106
+   },
+   "lamp_2": {
+    "reached": true,
+    "s": 4.8,
+    "closest": 0.088
+   }
+  },
+  "analog": {
+   "stick10": 0,
+   "stick30": 0.424,
+   "stick60": 1.271,
+   "stick100": 2.4,
+   "ratio30": 0.177
+  },
+  "brakeWalk": {
+   "moved_with_LT_only": 0
+  },
+  "brakeFloat": {
+   "speed_before": 1.436,
+   "stop_s": 0.6,
+   "speed_after_1s_more": 0.001,
+   "most_reverse_speed": 0
+  },
+  "handoff": {
+   "selfDriving": true,
+   "afterRB": false
+  },
+  "errors": []
+ }
+}

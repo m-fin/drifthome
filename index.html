@@ -1,0 +1,202 @@
+<!doctype html><html><head><meta charset="utf-8"><title>DRIFTHOME graybox</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}#hud{position:fixed;left:12px;top:10px;color:#ffd9a0;font:14px monospace;text-shadow:0 0 4px #000}
+#apbtn{position:fixed;right:24px;bottom:24px;padding:14px 22px;font:600 18px system-ui,sans-serif;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer;transition:box-shadow .3s,border-color .3s,color .3s}
+#apbtn.on{color:#fff;border-color:#3fa9ff;box-shadow:0 0 18px 4px rgba(63,169,255,.85),inset 0 0 12px rgba(63,169,255,.5)}
+#aplabel{position:fixed;right:24px;bottom:86px;font:700 20px system-ui,sans-serif;letter-spacing:.12em;color:#7cc4ff;text-shadow:0 0 10px #1e7bff;opacity:0;transition:opacity .6s}
+#aplabel.show{opacity:1}.capture #apbtn,.capture #aplabel{display:none!important}#pmbtn{position:fixed;right:24px;bottom:150px;width:52px;height:52px;font:24px system-ui;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer}
+#pmbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:none;gap:8px;align-items:center;font:600 14px system-ui,sans-serif;color:#d8e6ff;background:rgba(10,14,24,.72);padding:8px 12px;border-radius:12px}
+#pmbar button{font:600 14px system-ui;color:#d8e6ff;background:#1c2436;border:1px solid #56627a;border-radius:8px;padding:6px 12px;cursor:pointer}
+#pmguide{position:fixed;display:none;pointer-events:none;outline:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
+#pmguide::before,#pmguide::after{content:'';position:absolute;inset:0;border-left:1px solid rgba(255,255,255,.3);border-right:1px solid rgba(255,255,255,.3);left:33.33%;right:33.33%}
+#pmguide::after{border:0;border-top:1px solid rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.3);left:0;right:0;top:33.33%;bottom:33.33%}
+body.photo #pmguide{display:block}body.photo #pmbar{display:flex}body.photo #apbtn,body.photo #aplabel,body.photo #hud{display:none!important}
+body.photo.hideui #pmbar,body.photo.hideui #pmguide,body.photo.hideui #pmbtn,body.hideall #pmbtn{display:none!important}
+.capture #pmbtn,.capture #pmbar,.capture #pmguide{display:none!important}
+#toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);padding:10px 16px;font:600 14px system-ui,sans-serif;color:#e8f0ff;background:rgba(16,22,36,.88);border:1px solid #56627a;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:20;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+#helpbtn{position:fixed;left:24px;bottom:24px;width:44px;height:44px;font:700 20px system-ui;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer;z-index:15}
+#helppanel{position:fixed;left:24px;bottom:80px;display:none;width:min(360px,90vw);max-height:70vh;overflow:auto;padding:14px 16px;font:13px/1.45 system-ui,sans-serif;color:#d8e6ff;background:rgba(12,16,28,.92);border:1px solid #56627a;border-radius:12px;z-index:15;white-space:pre-wrap}
+#helppanel.show{display:block}
+.capture #toast,.capture #helpbtn,.capture #helppanel{display:none!important}
+body.photo #helpbtn,body.photo #helppanel{display:none!important}
+</style></head>
+<body><canvas id="c"></canvas><div id="hud"></div><div id="aplabel">SELF-DRIVING</div><button id="pmbtn" title="Photo mode (O)">&#128247;</button><div id="pmguide"></div><div id="pmbar"><span id="pmratio">4:5</span><button id="pmframe">Framing (F)</button><button id="pmhide">Hide UI (H)</button><button id="pmsave">Save (Enter)</button><button id="pmexit">Exit (Esc)</button></div><button id="apbtn" title="Hotkey: P / Y on controller">Start Self-Driving</button>
+<div id="toast"></div><button id="helpbtn" title="Controls (?)">?</button><div id="helppanel"></div>
+<script type="module">
+// URL: ?seed=1&w=1920&h=1080&view=follow|wide|window|cockpit  ; add &t=SEC to freeze on that sim time (used for stills), &hud=0 to hide HUD.
+// Interactive by default (WASD move, Space/C up/down, F float, mouse turns, Xbox gamepad). P / Y = Start Self-Driving.
+// &demo=1 plays the scripted seed pilot (as before). &manual=1 disables the RAF loop (window.dh drives ticks, for stills).
+// Capture mode (&capture=1, or window.cap present) hides the autopilot UI; capture.html itself never loads this page.
+import { reset, step, observe, state, DT } from './game.mjs'; import { makePilot, makeAutopilot, blendActions, HANDOFF_S } from './pilot.mjs'; import { createRenderer } from './render.mjs'; import * as THREE from './vendor/three.module.js';
+const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), W = +(q.get('w') || innerWidth), H = +(q.get('h') || innerHeight);
+const view = q.get('view') || 'follow', T = q.get('t'), hud = document.getElementById('hud'); if (q.get('hud') === '0') hud.remove();
+const scripted = T != null || q.get('demo') === '1', capture = q.get('capture') === '1' || !!window.cap;
+const btn = document.getElementById('apbtn'), label = document.getElementById('aplabel');
+if (capture || scripted) document.body.classList.add('capture');
+const R = createRenderer(document.getElementById('c'), W, H, seed, { debug: q.get('colliders') === '1', freePlay: true }); // freePlay: v4 free-play-only camera rules (capture.html never sets it) // &colliders=1 or B: draw collision boxes
+// M2 flight runs in scripted/still mode (&t= or &demo=1); interactive play stays the M1 cabin sandbox (no manual ship controls yet). &m1=1 forces M1.
+reset(seed, { m1: !scripted || q.get('m1') === '1' }); const act = makePilot(state()); let o = observe();
+// ---- autopilot / Start Self-Driving
+let ap = null, apT = 0;
+let chimeCtx = null;
+function chime() { try { chimeCtx ||= new AudioContext(); const t = chimeCtx.currentTime, g = chimeCtx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); g.connect(chimeCtx.destination);
+  for (const [f, d] of [[880, 0], [1318.5, 0.09]]) { const s = chimeCtx.createOscillator(); s.type = 'sine'; s.frequency.value = f; s.connect(g); s.start(t + d); s.stop(t + 0.5); } } catch {} }
+function engage() { if (ap || scripted) return; ap = makeAutopilot(o); apT = 0; btn.classList.add('on'); btn.textContent = 'Self-Driving On'; label.classList.add('show'); }
+function disengage(sound = true) { if (!ap) return; ap = null; btn.classList.remove('on'); btn.textContent = 'Start Self-Driving'; label.classList.remove('show'); if (sound) chime(); }
+const toggle = () => (ap ? disengage() : engage());
+// ---- toast + controls help
+const toastEl = document.getElementById('toast'); let toastTimer = 0;
+function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800); }
+const HELP = `DRIFTHOME controls
+
+Keyboard / mouse
+  WASD — move / fly
+  Space / C (or Shift) — up / down
+  Mouse — look
+  F — toggle float / walk
+  P — Start Self-Driving
+  B — show / hide collision boxes (debug)
+  O — photo mode
+  ? — this panel
+
+Xbox controller (standard mapping)
+  Left stick — move / fly
+  Right stick — look
+  RT — thrust forward (analog)
+  LT — brake (analog)
+  RB / LB (or D-pad up / down) — up / down (zero-g)
+  A — toggle float / walk
+  Y — Start Self-Driving
+  Menu — photo mode
+  View — this panel
+  Stick / RT / LT — take over from Self-Driving`;
+const helpPanel = document.getElementById('helppanel'), helpBtn = document.getElementById('helpbtn');
+helpPanel.textContent = HELP;
+function toggleHelp() { helpPanel.classList.toggle('show'); }
+helpBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHelp(); helpBtn.blur(); });
+// ---- player input
+const keys = new Set(); let yawCmd = null, floatReq = false, mouseYaw = 0, mousePitch = 0;
+const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft']);
+const DZ = 0.15;
+const padEdge = { y: false, a: false, menu: false, view: false };
+addEventListener('keydown', (e) => {
+  if (e.code === 'Slash' && e.shiftKey || e.key === '?') { if (!e.repeat) toggleHelp(); e.preventDefault(); return; }
+  if (e.code === 'KeyP') { if (!e.repeat) toggle(); e.preventDefault(); return; }
+  if (e.code === 'KeyB') { if (!e.repeat) toast(R.setDebug(!R.debug) ? 'Collision boxes on (B)' : 'Collision boxes off'); e.preventDefault(); return; }
+  if (MOVE_KEYS.has(e.code)) { disengage(); keys.add(e.code); if (e.code === 'KeyF' && !e.repeat) floatReq = true; e.preventDefault(); }
+});
+addEventListener('keyup', (e) => keys.delete(e.code));
+addEventListener('mousemove', (e) => { if (e.target === btn || (!e.movementX && !e.movementY)) return; disengage(); mouseYaw -= e.movementX * 0.004; });
+addEventListener('mousedown', (e) => { if (e.target !== btn && e.target !== helpBtn) disengage(); });
+btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); btn.blur(); });
+addEventListener('gamepadconnected', (e) => toast('Controller connected — Y: Self-Driving'));
+addEventListener('gamepaddisconnected', () => toast('Controller disconnected'));
+function padVal(b) { return b ? (typeof b.value === 'number' ? b.value : (b.pressed ? 1 : 0)) : 0; }
+function gamepad() {
+  const g = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null; if (!g) return null;
+  const dz = (v) => (Math.abs(v) < DZ ? 0 : v);
+  const ax0 = dz(g.axes[0] || 0), ax1 = dz(g.axes[1] || 0), ax2 = dz(g.axes[2] || 0), ax3 = dz(g.axes[3] || 0);
+  const lt = padVal(g.buttons[6]), rt = padVal(g.buttons[7]);
+  // zero-g up/down: RB or D-pad up = up, LB or D-pad down = down (was: no vertical control on the pad at all)
+  const ud = Math.max(padVal(g.buttons[5]), padVal(g.buttons[12])) - Math.max(padVal(g.buttons[4]), padVal(g.buttons[13]));
+  const raw = [g.axes[0] || 0, g.axes[1] || 0]; // left stick, radial deadzone below (playerAction)
+  const a = !!g.buttons[0]?.pressed, y = !!g.buttons[3]?.pressed, menu = !!g.buttons[9]?.pressed, view = !!g.buttons[8]?.pressed;
+  // edge-trigger face / menu / view
+  if (y && !padEdge.y) toggle();
+  if (a && !padEdge.a) floatReq = true;
+  if (menu && !padEdge.menu) pmToggle();
+  if (view && !padEdge.view) toggleHelp();
+  padEdge.y = y; padEdge.a = a; padEdge.menu = menu; padEdge.view = view;
+  // handoff: stick past deadzone or triggers while Self-Driving
+  if (ap && (ax0 || ax1 || ax2 || ax3 || lt > DZ || rt > DZ || ud)) disengage();
+  return { ax: [ax0, ax1, ax2, ax3], lt, rt, ud, raw };
+}
+function playerAction(o, extra) {
+  const k = (c) => (keys.has(c) ? 1 : 0), gp = extra === undefined ? gamepad() : extra;
+  let f = k('KeyW') - k('KeyS'), s = k('KeyD') - k('KeyA'), u = k('Space') - k('KeyC') - k('ShiftLeft');
+  let mag = null, brake = 0; // mag: analog strength 0..1 (null = keyboard: full)
+  if (gp) {
+    // left stick: radial deadzone DZ, then proportional (was: per-axis deadzone and the move vector normalised, so a 30% push walked at 96%)
+    const rx = gp.raw ? gp.raw[0] : gp.ax[0] || 0, ry = gp.raw ? gp.raw[1] : gp.ax[1] || 0, rm = Math.hypot(rx, ry);
+    const sm = rm < DZ ? 0 : Math.min(1, (rm - DZ) / (1 - DZ)), sf = rm > 1e-9 ? -ry / rm : 0, ss = rm > 1e-9 ? rx / rm : 0;
+    const pf = sm * sf + (gp.rt || 0), ps = sm * ss; // RT = analog thrust forward
+    if (pf || ps) { const km = Math.hypot(f, s) ? 1 : 0, pm2 = Math.min(1, Math.hypot(pf, ps)); f += pf; s += ps; mag = Math.max(km, pm2); }
+    brake = gp.lt || 0; // LT = analog brake (was: full-speed reverse)
+    u += gp.ud || 0;
+    f = Math.max(-1, Math.min(1, f));
+    mouseYaw -= (gp.ax[2] || 0) * 2 * DT;
+    mousePitch -= (gp.ax[3] || 0) * 1.5 * DT; // reserved; yaw is what the sim uses for look
+  }
+  const a = {}; if (o.mode === 'sleep' && (f || s || u || floatReq)) a.mode = 'wake';
+  if (floatReq) { a.mode = o.mode === 'float' ? 'walk' : o.mode === 'walk' ? 'float' : a.mode; floatReq = false; }
+  const yaw = o.yaw + mouseYaw; mouseYaw = 0; mousePitch = 0;
+  const fx = Math.cos(yaw), fz = -Math.sin(yaw), n = Math.hypot(f, s) || 1, g = (mag == null ? 1 : mag) / n;
+  a.move = [(f * fx - s * fz) * g, Math.max(-1, Math.min(1, u)), (f * fz + s * fx) * g]; a.look = yaw;
+  if (brake > 0) { // walk: scales the move down; float: thrust against the current velocity, fading out near rest (never reverses)
+    if (o.mode === 'float') { const v = o.vel, sp = Math.hypot(...v); if (sp > 1e-3) { const k = brake * Math.min(1, sp / 0.3); for (let i = 0; i < 3; i++) a.move[i] = a.move[i] * (1 - brake) - (v[i] / sp) * k; } }
+    else for (const i of [0, 2]) a.move[i] *= 1 - brake; }
+  return a;
+}
+function tick(extraPad) {
+  if (scripted) { o = step(act(o)).obs; return; }
+  const pa = playerAction(o, extraPad);
+  if (ap) { apT += DT; o = step(blendActions(pa, ap.act(o), Math.min(1, apT / HANDOFF_S))).obs; } else o = step(pa).obs;
+}
+const show = () => { R.render(o, view); if (hud.isConnected) hud.textContent = `DRIFTHOME · seed ${seed} · t=${o.t_s.toFixed(2)}s · ${o.mode} · ${o.room} · ${ap ? `self-driving→${ap.poi}${apT < HANDOFF_S ? ` (handoff ${Math.round(100 * apT / HANDOFF_S)}%)` : ''}` : (scripted ? 'demo' : 'player')} · ${(o.log.at(-1) || {}).type || ''}`; };
+
+// ---- photo mode (O, camera button, or Menu on controller). Pauses the sim, free camera, framing guides, hi-res PNG save.
+const RATIOS = { '16:9': [3840, 2160], '4:5': [2160, 2700], '9:16': [2160, 3840] }, RKEYS = Object.keys(RATIOS);
+const pm = { on: false, ratio: '4:5', cam: new THREE.PerspectiveCamera(55, W / H, 0.1, 1000), yaw: 0, pitch: 0, roll: 0, keys: new Set(), dragging: false };
+const pmEl = (id) => document.getElementById(id), pmbtn = pmEl('pmbtn'), guide = pmEl('pmguide');
+function pmClamp(p) { const ck = p.z < -5.05; p.x = Math.max(ck ? -2.8 : -5.8, Math.min(ck ? 2.8 : 5.8, p.x)); p.y = Math.max(0.2, Math.min(ck ? 2.8 : 3.8, p.y)); p.z = Math.max(-8.8, Math.min(4.8, p.z));
+  if (p.z < -4.8 && p.z > -5.4 && (Math.abs(p.x) > 0.8 || p.y > 2.4)) p.z = p.z > -5.1 ? -4.8 : -5.4; }
+function pmApply() { pm.cam.rotation.set(pm.pitch, pm.yaw, pm.roll, 'YXZ'); pmClamp(pm.cam.position); pm.cam.updateProjectionMatrix(); }
+function pmGuide() { pmEl('pmratio').textContent = pm.ratio; const [a, b] = RATIOS[pm.ratio], k = Math.min(innerWidth * 0.92 / a, innerHeight * 0.86 / b), gw = a * k, gh = b * k;
+  Object.assign(guide.style, { width: gw + 'px', height: gh + 'px', left: (innerWidth - gw) / 2 + 'px', top: (innerHeight - gh) / 2 + 'px' }); }
+function pmRender() { if (!pm.on) return; pm.cam.aspect = R.renderer.domElement.width / R.renderer.domElement.height; pmApply(); R.renderer.render(R.scene, pm.cam); }
+function pmEnter() { if (pm.on || scripted || capture) return; pm.on = true; keys.clear(); pm.keys.clear();
+  pm.cam.position.copy(R.camera.position); pm.cam.fov = R.camera.fov; const e = new THREE.Euler().setFromQuaternion(R.camera.quaternion, 'YXZ'); pm.yaw = e.y; pm.pitch = e.x; pm.roll = 0;
+  document.body.classList.add('photo'); document.body.classList.remove('hideui'); pmGuide(); pmRender(); }
+function pmExit() { if (!pm.on) return; pm.on = false; pm.keys.clear(); keys.clear(); mouseYaw = 0; if (document.pointerLockElement) document.exitPointerLock();
+  document.body.classList.remove('photo', 'hideui'); show(); }
+const pmToggle = () => (pm.on ? pmExit() : pmEnter());
+function pmCycle() { pm.ratio = RKEYS[(RKEYS.indexOf(pm.ratio) + 1) % RKEYS.length]; pmGuide(); }
+const pmHide = () => document.body.classList.toggle('hideui');
+function pmSnap(ratio = pm.ratio) { const r = R.renderer, gl = r.getContext(), [a, b] = RATIOS[ratio];
+  const lim = Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE), ...gl.getParameter(gl.MAX_VIEWPORT_DIMS), r.capabilities.maxTextureSize);
+  let k = Math.min(1, lim / Math.max(a, b)), w, h; const pr = r.getPixelRatio(), old = r.getSize(new THREE.Vector2());
+  for (let i = 0; i < 6; i++) { w = Math.floor(a * k); h = Math.floor(b * k); r.setPixelRatio(1); r.setSize(w, h, false);
+    if (gl.drawingBufferWidth === w && gl.drawingBufferHeight === h) break; k *= Math.min(gl.drawingBufferWidth / w, gl.drawingBufferHeight / h) * 0.99; }
+  pm.cam.aspect = w / h; pmApply(); r.render(R.scene, pm.cam); const url = r.domElement.toDataURL('image/png');
+  r.setPixelRatio(pr); r.setSize(old.x, old.y, false); pmRender(); return { url, w, h, ratio, scaled: w !== a }; }
+function pmSave() { const s = pmSnap(), d = new Date(), z = (n) => String(n).padStart(2, '0'), ts = `${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`;
+  const a = document.createElement('a'); a.href = s.url; a.download = `drifthome_${s.ratio.replace(':', 'x')}_${ts}.png`; document.body.appendChild(a); a.click(); a.remove();
+  if (s.scaled) console.warn(`photo mode: WebGL limit, saved ${s.w}x${s.h}`); return s; }
+pmbtn.addEventListener('click', (e) => { e.stopPropagation(); pmToggle(); pmbtn.blur(); });
+for (const [id, f] of [['pmframe', pmCycle], ['pmhide', pmHide], ['pmsave', pmSave], ['pmexit', pmExit]]) pmEl(id).addEventListener('click', (e) => { e.stopPropagation(); f(); e.target.blur(); });
+addEventListener('keydown', (e) => { if (scripted || capture) return;
+  if (e.code === 'KeyO' && !e.repeat) { pmToggle(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if (!pm.on) return; e.preventDefault(); e.stopImmediatePropagation(); if (e.repeat && !/Key[WASDQE]|Shift/.test(e.code)) return;
+  if (e.code === 'Escape') pmExit(); else if (e.code === 'KeyH') pmHide(); else if (e.code === 'KeyF') pmCycle(); else if (e.code === 'Enter' || e.code === 'NumpadEnter') pmSave(); else pm.keys.add(e.code); }, true);
+addEventListener('keyup', (e) => { if (pm.on) { pm.keys.delete(e.code); e.stopImmediatePropagation(); } }, true);
+addEventListener('mousedown', (e) => { if (!pm.on) return; e.stopImmediatePropagation(); if (e.target.closest('#pmbar,#pmbtn')) return; pm.dragging = true; R.renderer.domElement.requestPointerLock?.(); }, true);
+addEventListener('mouseup', () => { pm.dragging = false; }, true);
+document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement) pm.dragging = false; });
+addEventListener('mousemove', (e) => { if (!pm.on) return; e.stopImmediatePropagation(); if (!pm.dragging && !document.pointerLockElement) return;
+  pm.yaw -= e.movementX * 0.0025; pm.pitch = Math.max(-1.5, Math.min(1.5, pm.pitch - e.movementY * 0.0025)); }, true);
+addEventListener('wheel', (e) => { if (!pm.on) return; e.preventDefault(); pm.cam.fov = Math.max(12, Math.min(100, pm.cam.fov * Math.exp(e.deltaY * 0.001))); }, { capture: true, passive: false });
+addEventListener('resize', () => pm.on && pmGuide());
+function pmTick(dt) { const k = (c) => (pm.keys.has(c) ? 1 : 0), sp = (pm.keys.has('ShiftLeft') || pm.keys.has('ShiftRight') ? 0.4 : 2.2) * dt;
+  const v = new THREE.Vector3(k('KeyD') - k('KeyA'), 0, k('KeyS') - k('KeyW')); if (v.lengthSq()) pm.cam.position.add(v.normalize().applyQuaternion(pm.cam.quaternion).multiplyScalar(sp));
+  pm.roll += (k('KeyE') - k('KeyQ')) * 1.2 * dt * (sp < 0.05 ? 0.3 : 1); pmRender(); }
+if (capture || scripted) { pmbtn.remove(); helpBtn.remove(); }
+window.dh = { debug: (v) => R.setDebug(v), get cam() { return { pos: R.camera.position.toArray(), near: R.camera.near, stats: R.camStats(), obj: R.camera }; }, // tests/freeplay_cam_check.mjs
+  engage, disengage, toggle, get o() { return o; }, get ap() { return ap && { poi: ap.poi, blend: Math.min(1, apT / HANDOFF_S) }; },
+  photo: { enter: pmEnter, exit: pmExit, cycle: pmCycle, hide: pmHide, save: pmSave, snap: pmSnap, get on() { return pm.on; }, get ratio() { return pm.ratio; }, set ratio(r) { pm.ratio = r; pmGuide(); },
+    set(c = {}) { if (c.pos) pm.cam.position.set(...c.pos); if (c.look) { pm.cam.lookAt(...c.look); const e = new THREE.Euler().setFromQuaternion(pm.cam.quaternion, 'YXZ'); pm.yaw = e.y; pm.pitch = e.x; }
+      if (c.fov) pm.cam.fov = c.fov; if (c.roll != null) pm.roll = c.roll; pmRender(); return { pos: pm.cam.position.toArray(), fov: pm.cam.fov }; } },
+  tick(n = 1, inp = {}) { keys.clear(); (inp.keys || []).forEach(c => keys.add(c)); if (inp.float) floatReq = true; for (let i = 0; i < n; i++) tick(inp.pad ? undefined : null); /* inp.pad: read navigator.getGamepads() like live play */ keys.clear(); if (!inp.noshow) show(); return observe(); } };
+if (T != null) { while (o.t_s < +T) o = step(act(o)).obs; show(); document.title = 'READY'; }
+else if (q.get('manual') === '1') { show(); document.title = 'READY'; }
+else { let acc = 0, last = performance.now(); const loop = (now) => { acc += Math.min(0.25, (now - last) / 1000); last = now; if (pm.on) { gamepad(); /* edge: Menu exits photo, View toggles help */ pmTick(Math.min(0.1, acc)); acc = 0; } else { while (acc >= DT) { tick(); acc -= DT; } show(); } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+</script></body></html>
