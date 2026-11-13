@@ -16,7 +16,8 @@ Keyboard + mouse or an Xbox/standard gamepad. Add `&manual=1` for free play, `&h
 
 ## Headless tools (Node 20)
 - `node run.mjs <seed>`: run the sim headless and write `runs/events_seed<seed>.json`
-- `node tests/playtest_collision.mjs`: collision playtest (exit 0 = pass)
+- `npm test`: the collision playtest plus the golden-run check (`tests/golden_runs.mjs`: seeds 1-8 must reproduce the committed `runs/` event logs exactly). Runs in GitHub Actions on pull requests and pushes to `main`.
+- `node tests/playtest_collision.mjs`: collision playtest only (exit 0 = pass)
 - Other checks in `tests/` use headless Chrome (puppeteer-core)
 
 See [TECHNICAL.md](TECHNICAL.md) for the full file-by-file breakdown, and `PLAN.md` / `STORY.md` for design notes.
