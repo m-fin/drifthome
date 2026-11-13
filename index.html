@@ -78,7 +78,7 @@ helpBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHelp(); he
 const keys = new Set(); let yawCmd = null, floatReq = false, mouseYaw = 0, mousePitch = 0;
 const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft']);
 const DZ = 0.15;
-const padEdge = { y: false, a: false, menu: false, view: false };
+const padEdge = { y: false, a: false, menu: false, view: false }; let padKey = null;
 addEventListener('keydown', (e) => {
   if (e.code === 'Slash' && e.shiftKey || e.key === '?') { if (!e.repeat) toggleHelp(); e.preventDefault(); return; }
   if (e.code === 'KeyP') { if (!e.repeat) toggle(); e.preventDefault(); return; }
@@ -93,7 +93,10 @@ addEventListener('gamepadconnected', (e) => toast('Controller connected — Y: S
 addEventListener('gamepaddisconnected', () => toast('Controller disconnected'));
 function padVal(b) { return b ? (typeof b.value === 'number' ? b.value : (b.pressed ? 1 : 0)) : 0; }
 function gamepad() {
-  const g = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null; if (!g) return null;
+  // prefer the standard (Xbox-style) mapping over whatever is listed first (a wheel or virtual pad); a different pad, or none,
+  // resets the held-button edges so a button held through a disconnect isn't swallowed on reconnect
+  const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter((p) => p && p.connected !== false) : [], g = pads.find((p) => p.mapping === 'standard') || pads[0] || null;
+  const key = g ? g.index + ':' + g.id : null; if (key !== padKey) { padKey = key; padEdge.y = padEdge.a = padEdge.menu = padEdge.view = false; } if (!g) return null;
   const dz = (v) => (Math.abs(v) < DZ ? 0 : v);
   const ax0 = dz(g.axes[0] || 0), ax1 = dz(g.axes[1] || 0), ax2 = dz(g.axes[2] || 0), ax3 = dz(g.axes[3] || 0);
   const lt = padVal(g.buttons[6]), rt = padVal(g.buttons[7]);
