@@ -28,7 +28,7 @@ body.photo #helpbtn,body.photo #helppanel{display:none!important}
 // &demo=1 plays the scripted seed pilot (as before). &manual=1 disables the RAF loop (window.dh drives ticks, for stills).
 // Capture mode (&capture=1, or window.cap present) hides the autopilot UI; capture.html itself never loads this page.
 import { reset, step, observe, state, DT } from './game.mjs'; import { makePilot, makeAutopilot, blendActions, HANDOFF_S } from './pilot.mjs'; import { createRenderer } from './render.mjs'; import * as THREE from './vendor/three.module.js';
-const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), W = +(q.get('w') || innerWidth), H = +(q.get('h') || innerHeight);
+const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), fixedSize = !!(q.get('w') || q.get('h')), W = +(q.get('w') || innerWidth), H = +(q.get('h') || innerHeight);
 const view = q.get('view') || 'follow', T = q.get('t'), hud = document.getElementById('hud'); if (q.get('hud') === '0') hud.remove();
 const scripted = T != null || q.get('demo') === '1', capture = q.get('capture') === '1' || !!window.cap;
 const btn = document.getElementById('apbtn'), label = document.getElementById('aplabel');
@@ -39,7 +39,7 @@ reset(seed, { m1: !scripted || q.get('m1') === '1' }); const act = makePilot(sta
 // ---- autopilot / Start Self-Driving
 let ap = null, apT = 0;
 let chimeCtx = null;
-function chime() { try { chimeCtx ||= new AudioContext(); const t = chimeCtx.currentTime, g = chimeCtx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); g.connect(chimeCtx.destination);
+function chime() { try { chimeCtx ||= new AudioContext(); if (chimeCtx.state === 'suspended') chimeCtx.resume().catch(() => {}); /* made on a pad press (not a user gesture): resume on the next chime */ const t = chimeCtx.currentTime, g = chimeCtx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); g.connect(chimeCtx.destination);
   for (const [f, d] of [[880, 0], [1318.5, 0.09]]) { const s = chimeCtx.createOscillator(); s.type = 'sine'; s.frequency.value = f; s.connect(g); s.start(t + d); s.stop(t + 0.5); } } catch {} }
 function engage() { if (ap || scripted) return; ap = makeAutopilot(o); apT = 0; btn.classList.add('on'); btn.textContent = 'Self-Driving On'; label.classList.add('show'); }
 function disengage(sound = true) { if (!ap) return; ap = null; btn.classList.remove('on'); btn.textContent = 'Start Self-Driving'; label.classList.remove('show'); if (sound) chime(); }
@@ -76,7 +76,7 @@ function toggleHelp() { helpPanel.classList.toggle('show'); }
 helpBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHelp(); helpBtn.blur(); });
 // ---- player input
 const keys = new Set(); let yawCmd = null, floatReq = false, mouseYaw = 0, mousePitch = 0;
-const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft']);
+const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft', 'ShiftRight']);
 const DZ = 0.15;
 const padEdge = { y: false, a: false, menu: false, view: false }; let padKey = null;
 addEventListener('keydown', (e) => {
@@ -86,6 +86,8 @@ addEventListener('keydown', (e) => {
   if (MOVE_KEYS.has(e.code)) { disengage(); keys.add(e.code); if (e.code === 'KeyF' && !e.repeat) floatReq = true; e.preventDefault(); }
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
+// a key held while the window loses focus (alt-tab, a dialog, clicking another window) never sends keyup: Bolt kept walking
+addEventListener('blur', () => keys.clear()); document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
 addEventListener('mousemove', (e) => { if (e.target === btn || (!e.movementX && !e.movementY)) return; disengage(); mouseYaw -= e.movementX * 0.004; });
 addEventListener('mousedown', (e) => { if (e.target !== btn && e.target !== helpBtn) disengage(); });
 btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); btn.blur(); });
@@ -116,7 +118,7 @@ function gamepad() {
 }
 function playerAction(o, extra) {
   const k = (c) => (keys.has(c) ? 1 : 0), gp = extra === undefined ? gamepad() : extra;
-  let f = k('KeyW') - k('KeyS'), s = k('KeyD') - k('KeyA'), u = k('Space') - k('KeyC') - k('ShiftLeft');
+  let f = k('KeyW') - k('KeyS'), s = k('KeyD') - k('KeyA'), u = k('Space') - k('KeyC') - Math.max(k('ShiftLeft'), k('ShiftRight'));
   let mag = null, brake = 0; // mag: analog strength 0..1 (null = keyboard: full)
   if (gp) {
     // left stick: radial deadzone DZ, then proportional (was: per-axis deadzone and the move vector normalised, so a 30% push walked at 96%)
@@ -189,6 +191,8 @@ addEventListener('mousemove', (e) => { if (!pm.on) return; e.stopImmediatePropag
   pm.yaw -= e.movementX * 0.0025; pm.pitch = Math.max(-1.5, Math.min(1.5, pm.pitch - e.movementY * 0.0025)); }, true);
 addEventListener('wheel', (e) => { if (!pm.on) return; e.preventDefault(); pm.cam.fov = Math.max(12, Math.min(100, pm.cam.fov * Math.exp(e.deltaY * 0.001))); }, { capture: true, passive: false });
 addEventListener('resize', () => pm.on && pmGuide());
+// follow the window size unless ?w= / ?h= pinned it (stills, captures); photo mode re-renders, play shows the next frame
+if (!fixedSize) addEventListener('resize', () => { if (R.resize(innerWidth, innerHeight)) { if (pm.on) pmRender(); else show(); } });
 function pmTick(dt) { const k = (c) => (pm.keys.has(c) ? 1 : 0), sp = (pm.keys.has('ShiftLeft') || pm.keys.has('ShiftRight') ? 0.4 : 2.2) * dt;
   const v = new THREE.Vector3(k('KeyD') - k('KeyA'), 0, k('KeyS') - k('KeyW')); if (v.lengthSq()) pm.cam.position.add(v.normalize().applyQuaternion(pm.cam.quaternion).multiplyScalar(sp));
   pm.roll += (k('KeyE') - k('KeyQ')) * 1.2 * dt * (sp < 0.05 ? 0.3 : 1); pmRender(); }
