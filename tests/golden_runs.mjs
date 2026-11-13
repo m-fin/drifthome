@@ -21,7 +21,7 @@ for (const m1 of [false, true]) {
     for (let i = 0; i < n; i++) {
       if (JSON.stringify(got.events[i]) !== JSON.stringify(want.events[i])) {
         const g = got.events[i], w = want.events[i];
-        first = `event ${i}: got ${g ? `${g.type}@${g.t_s}` : 'none'}, want ${w ? `${w.type}@${w.t_s}` : 'none'}`;
+        first = `event ${i}: got ${g ? `${g.type}@${g.t_s}s (tick ${g.tick})` : 'none'}, want ${w ? `${w.type}@${w.t_s}s (tick ${w.tick})` : 'none'}`;
         break;
       }
     }
