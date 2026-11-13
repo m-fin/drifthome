@@ -39,7 +39,7 @@ reset(seed, { m1: !scripted || q.get('m1') === '1' }); const act = makePilot(sta
 // ---- autopilot / Start Self-Driving
 let ap = null, apT = 0;
 let chimeCtx = null;
-function chime() { try { chimeCtx ||= new AudioContext(); const t = chimeCtx.currentTime, g = chimeCtx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); g.connect(chimeCtx.destination);
+function chime() { try { chimeCtx ||= new AudioContext(); if (chimeCtx.state === 'suspended') chimeCtx.resume().catch(() => {}); /* made on a pad press (not a user gesture): resume on the next chime */ const t = chimeCtx.currentTime, g = chimeCtx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); g.connect(chimeCtx.destination);
   for (const [f, d] of [[880, 0], [1318.5, 0.09]]) { const s = chimeCtx.createOscillator(); s.type = 'sine'; s.frequency.value = f; s.connect(g); s.start(t + d); s.stop(t + 0.5); } } catch {} }
 function engage() { if (ap || scripted) return; ap = makeAutopilot(o); apT = 0; btn.classList.add('on'); btn.textContent = 'Self-Driving On'; label.classList.add('show'); }
 function disengage(sound = true) { if (!ap) return; ap = null; btn.classList.remove('on'); btn.textContent = 'Start Self-Driving'; label.classList.remove('show'); if (sound) chime(); }
