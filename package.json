@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "DRIFTHOME: a cozy 3D space-exploration game (three.js).",
   "scripts": {
-    "test": "node tests/playtest_collision.mjs && node tests/golden_runs.mjs",
+    "test": "node tests/playtest_collision.mjs && node tests/golden_runs.mjs && node tests/helm.mjs",
     "run": "node run.mjs"
   },
   "keywords": [],
   "author": "Matthew \"Frog\" Finley",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
     "three": "^0.186.1"
   },

@@ -47,8 +47,12 @@ Box is memory-tight: one Chrome at a time.
 see `runs/M2_CAPTURE_PLAN.md`. `capture.html` also has `cap.still(tick, view)` for single stills.
 
 ## Live play
-`index.html` interactive mode is still the M1 cabin sandbox (no manual ship controls yet). `&t=SEC` / `&demo=1` play the M2 run
-(`&view=chase|launch|nebula|nearmiss|approach|landed|docked` for exterior views, `&m1=1` for the old run).
+`index.html` loads the M2 ship. Walk the cabin, float, hold E on a handhold to grab it, and press E in the cockpit to sit.
+From the seat, W launches (and lifts off the pad), the mouse or arrows steer, Shift boosts, and the exterior chase camera
+takes over while the ship is in flight or on the pad. Unbuckling during a coast leaves Bolt in the cabin; the window sky
+(free play only) turns with the ship and keeps Ember in view. `&m1=1` is the old cabin-only sandbox. `&t=SEC` / `&demo=1`
+still play the seeded pilot. Touch controls show on a coarse pointer, a narrow touch screen, or `?touch=1`.
 
 ## Next (M3)
-Mac capture of M2 (16:9 + 9:16), manual flight controls, live view from the cabin windows during flight, handhold grab animation.
+Mac capture of M2 (16:9 + 9:16). Manual flight, the live cabin sky, and the handhold grab are in free play; capture
+cameras and event logs are unchanged.

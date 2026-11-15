@@ -5,26 +5,60 @@ import { buildWorld } from './world.mjs';
 import { createSpace } from './space.mjs';
 import { EXTERIOR } from './director.mjs';
 export function createRenderer(canvas, W, H, seed = 1, opt = {}) {
-  const r = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  const touchPoints = (typeof navigator !== 'undefined' && navigator.maxTouchPoints) || 0;
+  const coarse = !!opt.freePlay && typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  const handheld = coarse || (!!opt.freePlay && touchPoints > 0 && Math.min(W, H) < 820);
+  const r = new THREE.WebGLRenderer({ canvas, antialias: !handheld, preserveDrawingBuffer: true, powerPreference: handheld ? 'low-power' : 'high-performance' });
   r.setSize(W, H, false); r.shadowMap.enabled = true; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05;
+  let pixelScale = !!opt.pixelScale;
+  // Live play only: cap the drawing buffer so a phone (or a 2x laptop) doesn't shade three shadow maps at 3x.
+  // Stills, captures and the headless checks pass a fixed size and keep a 1:1 buffer.
+  function applyPixels(w, h) {
+    if (!pixelScale) { if (r.getPixelRatio() !== 1) r.setPixelRatio(1); return; }
+    const hand = handheld || (touchPoints > 0 && Math.min(w, h) < 820);
+    let pr = Math.min(globalThis.devicePixelRatio || 1, hand ? 1.35 : 1.6);
+    const cap = hand ? 1280 * 720 : 1600 * 900;
+    if (w * h * pr * pr > cap) pr = Math.sqrt(cap / Math.max(1, w * h));
+    r.setPixelRatio(Math.max(0.75, Math.min(pr, hand ? 1.35 : 1.6)));
+    // the drawing buffer is pr times the window; the element itself stays window-sized (otherwise a 1.35x buffer spills off a phone)
+    r.domElement.style.width = w + 'px';
+    r.domElement.style.height = h + 'px';
+  }
+  applyPixels(W, H);
+  const shadowStride = handheld && pixelScale ? 2 : 0; let shadowTick = 0;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x05060f);
   const cam = new THREE.PerspectiveCamera(W > H ? 60 : 75, W / H, 0.1, 1000); // near/far tightened from 0.05/2000 (depth precision x4 at the walls)
   const M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, ...o });
   const add = (geo, mat, p, rot) => { const m = new THREE.Mesh(geo, mat); m.position.set(...p); if (rot) m.rotation.set(...rot); m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
   const box = (s, mat, p) => add(new THREE.BoxGeometry(...s), mat, p);
-  // --- sky: seeded stars + nebula sprites, outside the window
+  // --- sky: seeded stars + nebula sprites, outside the window. One group so free play can turn it with the ship
+  // (captures leave the group at identity, which is the same as the old scene-level sky).
+  const sky = new THREE.Group(); scene.add(sky);
   let rs = seed >>> 0; const rnd = () => { rs = (rs * 1664525 + 1013904223) >>> 0; return rs / 4294967296; };
   const sp = [], sc = [];
   for (let i = 0; i < 2500; i++) { const u = rnd() * 2 - 1, th = rnd() * 6.283, rr = Math.sqrt(1 - u * u); sp.push(rr * Math.cos(th) * 600, u * 600, rr * Math.sin(th) * 600); const w = 0.7 + rnd() * 0.3; sc.push(w, w, 0.85 + rnd() * 0.15); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc, 3));
-  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ size: 1.6, vertexColors: true, sizeAttenuation: false })));
+  sky.add(new THREE.Points(sg, new THREE.PointsMaterial({ size: 1.6, vertexColors: true, sizeAttenuation: false })));
   const neb = document.createElement('canvas'); neb.width = neb.height = 256; const nx = neb.getContext('2d');
   const grd = nx.createRadialGradient(128, 128, 0, 128, 128, 128); grd.addColorStop(0, 'rgba(255,255,255,0.9)'); grd.addColorStop(1, 'rgba(255,255,255,0)'); nx.fillStyle = grd; nx.fillRect(0, 0, 256, 256);
   const ntex = new THREE.CanvasTexture(neb);
   const cols = [0x8a3cff, 0xff4fa3, 0x2fb7ff, 0x5a2dff];
   for (let i = 0; i < 14; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: ntex, color: cols[i % 4], transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
-    s.position.set(400, (rnd() - 0.3) * 160, (rnd() - 0.5) * 300); s.scale.setScalar(120 + rnd() * 160); scene.add(s); }
-  add(new THREE.SphereGeometry(40, 32, 16), M(0xc98a5a, { roughness: 1 }), [500, -60, 120]); // distant planet
+    s.position.set(400, (rnd() - 0.3) * 160, (rnd() - 0.5) * 300); s.scale.setScalar(120 + rnd() * 160); sky.add(s); }
+  const farPlanet = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), M(0xc98a5a, { roughness: 1 })); farPlanet.position.set(500, -60, 120); sky.add(farPlanet);
+  const farPlanetHome = farPlanet.position.clone();
+  const skyWorld = opt.freePlay ? buildWorld(seed) : null;
+  const _up = new THREE.Vector3(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _Z = new THREE.Vector3(), _basis = new THREE.Matrix4(), _sq = new THREE.Quaternion(), _roll = new THREE.Quaternion(), _zAxis = new THREE.Vector3(0, 0, 1);
+  function orientSky(o) {
+    if (!skyWorld || o.m1 || !o.ship) { sky.quaternion.identity(); farPlanet.position.copy(farPlanetHome); farPlanet.scale.setScalar(1); return; }
+    const f = o.ship.fwd; _Z.set(-f[0], -f[1], -f[2]); if (_Z.lengthSq() < 1e-8) _Z.set(0, 0, 1); _Z.normalize();
+    _X.crossVectors(_up.set(0, 1, 0), _Z); if (_X.lengthSq() < 1e-6) _X.crossVectors(_up.set(1, 0, 0), _Z); _X.normalize();
+    _Y.crossVectors(_Z, _X).normalize(); _basis.makeBasis(_X, _Y, _Z); _sq.setFromRotationMatrix(_basis);
+    _sq.multiply(_roll.setFromAxisAngle(_zAxis, (o.ship.bank || 0) * 0.5)); sky.quaternion.copy(_sq).invert();
+    const pc = skyWorld.planet.c, spw = o.ship.pos; _X.set(pc[0] - spw[0], pc[1] - spw[1], pc[2] - spw[2]);
+    const dist = _X.length() || 1; farPlanet.position.copy(_X).multiplyScalar(520 / dist);
+    farPlanet.scale.setScalar(0.55 + Math.max(0, Math.min(1, 1 - dist / 9000)) * 2.4);
+  }
   // --- cabin shell (walls built as panels so the window and doorway are real openings)
   const wall = M(0x8a6f55), floor = M(0x6b4a33), ceil = M(0x9b8670), trim = M(0x3a3f47, { metalness: 0.5, roughness: 0.4 });
   box([12, 0.2, 10], floor, [0, -0.1, 0]); box([12, 0.2, 10], ceil, [0, 4.1, 0]);
@@ -71,7 +105,7 @@ export function createRenderer(canvas, W, H, seed = 1, opt = {}) {
   scene.add(new THREE.HemisphereLight(0xffe2c0, 0x2a1d14, 0.35));
   const warm = (p, i, sm = 512) => { const l = new THREE.PointLight(0xffb26b, i, 14, 1.6); l.position.set(...p); l.castShadow = true; l.shadow.mapSize.set(sm, sm); l.shadow.bias = -0.004; l.shadow.normalBias = 0.03; scene.add(l);
     add(new THREE.SphereGeometry(0.14, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffd9a0, emissive: 0xffb26b, emissiveIntensity: 3 }), p).castShadow = false; };
-  warm([-3, 3.6, 2.5], 18, 1024); warm([2.5, 3.6, 2.5], 14); warm([-1, 3.6, -3], 10);
+  warm([-3, 3.6, 2.5], 18, handheld ? 512 : 1024); warm([2.5, 3.6, 2.5], 14, handheld ? 256 : 512); warm([-1, 3.6, -3], 10, handheld ? 256 : 512);
   const cool = new THREE.DirectionalLight(0x9fb8ff, 0.6); cool.position.set(20, 6, 2); scene.add(cool);
   const teal = new THREE.PointLight(0x36e7ff, 6, 6, 2); teal.position.set(0, 1.6, -8.2); scene.add(teal);
   // --- Bolt: primitives only
@@ -95,14 +129,27 @@ export function createRenderer(canvas, W, H, seed = 1, opt = {}) {
   hull.renderOrder = 10; dbg.add(hull);
   let space = null; // exterior scene, built on first use so cabin-only stills stay as cheap as before
   function render(o, view = 'follow') {
-    if (view === 'follow' && o.mode === 'seat' && o.ship && (o.ship.mode === 'flight' || o.ship.mode === 'landed')) view = 'chase';
-    if (EXTERIOR.has(view) && o.ship) { space ||= createSpace(THREE, buildWorld(seed), seed, W, H); space.update(o, view); r.render(space.scene, space.camera); return; }
+    if (shadowStride > 1) { r.shadowMap.autoUpdate = false; if (shadowTick++ % shadowStride === 0) r.shadowMap.needsUpdate = true; }
+    // free play at the helm: the follow camera would sit inside the cabin while the ship flies. Chase (and the docked frame) already exist for capture.
+    if (view === 'follow' && o.mode === 'seat' && o.ship && !o.m1) {
+      // the chase rig sits inside the dock for the first seconds of a launch; the launch camera is already outside the bay
+      const inBay = skyWorld && o.ship.mode === 'flight' && o.ship.pos[2] > skyWorld.hangar.mouthZ - 40;
+      if (o.ship.mode === 'docked') view = 'docked';
+      else if (inBay) view = 'launch';
+      else if (o.ship.mode === 'flight' || o.ship.mode === 'landed') view = 'chase';
+    }
+    if (EXTERIOR.has(view) && o.ship) { space ||= createSpace(THREE, skyWorld || buildWorld(seed), seed, W, H); space.update(o, view); r.render(space.scene, space.camera); return; }
+    orientSky(o);
     bolt.position.set(o.pos[0], o.pos[1] + BY, o.pos[2]); bolt.rotation.set(0, o.yaw, 0);
     const t = o.t_s, sleep = o.mode === 'sleep', fl = o.mode === 'float';
     bolt.rotation.z = sleep ? 1.2 : fl ? Math.sin(t * 0.9) * 0.12 : 0; // seat mode renders as the upright pose bolt.rotation.x = fl ? Math.sin(t * 0.7) * 0.1 : 0;
     if (sleep) bolt.position.set(LAYOUT.bed[0], 1.0, 3.85); // on his back, head on the pillow, resting on the blanket (was y 0.85: sank 13 cm into the bunk, face down)
     eyes.forEach(e => e.material.emissiveIntensity = sleep ? 0.2 : 3);
-    arms.forEach((a, k) => { a.rotation.x = 0; a.rotation.z = fl ? -0.9 : Math.sin(t * 6 + k * Math.PI) * 0.4 * Math.hypot(o.vel[0], o.vel[2]); });
+    const grabbing = FREE && fl && o.near_handhold >= 0 && o.grab;
+    arms.forEach((a, k) => {
+      if (grabbing) { a.rotation.x = -2.2; a.rotation.z = (k ? -1 : 1) * 0.35; return; }
+      a.rotation.x = 0; a.rotation.z = fl ? -0.9 : Math.sin(t * 6 + k * Math.PI) * 0.4 * Math.hypot(o.vel[0], o.vel[2]);
+    });
     legs.forEach((l, k) => { l.rotation.z = fl ? 0.4 : Math.sin(t * 6 + k * Math.PI) * 0.5 * Math.hypot(o.vel[0], o.vel[2]); });
     hull.position.set(o.pos[0], o.pos[1] + (BOLT.up - BOLT.down) / 2, o.pos[2]);
     jet.visible = fl; jet.scale.setScalar(fl ? 0.6 + Math.min(0.7, Math.hypot(...o.vel)) : 1); // max 1.3 keeps the flame inside the hull radius
@@ -353,10 +400,17 @@ export function createRenderer(canvas, W, H, seed = 1, opt = {}) {
   // window resize (free play): new drawing-buffer size, aspect and the same portrait/landscape FOV rules as at start.
   // The exterior camera keeps its own FOV rule (space.mjs); its 9:16 framing offsets are still chosen once, at creation.
   function resize(w, h) {
-    if (!(w > 0 && h > 0) || (w === W && h === H)) return false; W = w; H = h; r.setSize(w, h, false);
+    if (!(w > 0 && h > 0) || (w === W && h === H)) return false; W = w; H = h; r.setSize(w, h, false); applyPixels(w, h);
     cam.aspect = w / h; cam.fov = w < h ? 62 : 58; cam.updateProjectionMatrix();
     if (space) { space.camera.aspect = w / h; space.camera.fov = w > h ? 55 : 68; space.camera.updateProjectionMatrix(); }
     return true;
   }
-  return { render, resize, placeCam, renderer: r, scene, camera: cam, bolt, get space() { return space; }, setDebug(v) { dbg.visible = !!v; return dbg.visible; }, get debug() { return dbg.visible; }, camStats: () => ({ cuts: fc.cuts, roomCuts: fc.roomCuts, pulls: fc.pulls, fixed: fc.fixed, capped: fc.capped, idx: fc.idx, room: fc.room, why: fc.why, tgt: fc.tgt && fc.tgt.map(v => +v.toFixed(2)) }) /* why: what moved the camera this frame (occ/retarget/hit/pitch/rings), for the tests */ };
+  function preloadSpace(obs) {
+    if (space || !skyWorld || !obs || obs.m1) return false;
+    const rt = new THREE.WebGLRenderTarget(16, 16);
+    space = createSpace(THREE, skyWorld, seed, W, H); space.update(obs, 'chase');
+    r.setRenderTarget(rt); r.render(space.scene, space.camera); r.setRenderTarget(null); rt.dispose();
+    return true;
+  }
+  return { render, resize, preloadSpace, placeCam, renderer: r, scene, camera: cam, bolt, get space() { return space; }, get quality() { return { handheld, pixelRatio: r.getPixelRatio(), shadowStride }; }, setDebug(v) { dbg.visible = !!v; return dbg.visible; }, get debug() { return dbg.visible; }, camStats: () => ({ cuts: fc.cuts, roomCuts: fc.roomCuts, pulls: fc.pulls, fixed: fc.fixed, capped: fc.capped, idx: fc.idx, room: fc.room, why: fc.why, tgt: fc.tgt && fc.tgt.map(v => +v.toFixed(2)) }) /* why: what moved the camera this frame (occ/retarget/hit/pitch/rings), for the tests */ };
 }
