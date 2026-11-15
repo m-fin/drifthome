@@ -1,6 +1,7 @@
-<!doctype html><html><head><meta charset="utf-8"><title>DRIFTHOME graybox</title>
-<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}#hud{position:fixed;left:12px;top:10px;color:#ffd9a0;font:14px monospace;text-shadow:0 0 4px #000}
-#apbtn{position:fixed;right:24px;bottom:24px;padding:14px 22px;font:600 18px system-ui,sans-serif;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer;transition:box-shadow .3s,border-color .3s,color .3s}
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><meta name="theme-color" content="#07060c"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="icon" href="data:,">
+<title>DRIFTHOME</title>
+<style>html,body{margin:0;background:#000;overflow:hidden;height:100%;touch-action:none;overscroll-behavior:none}canvas{display:block;touch-action:none}#hud{position:fixed;left:max(12px, env(safe-area-inset-left));top:max(10px, env(safe-area-inset-top));color:#ffd9a0;font:14px monospace;text-shadow:0 0 4px #000;max-width:min(70vw, 28rem)}
+#apbtn{position:fixed;right:max(16px, env(safe-area-inset-right));bottom:max(16px, env(safe-area-inset-bottom));padding:14px 22px;font:600 18px system-ui,sans-serif;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer;transition:box-shadow .3s,border-color .3s,color .3s}
 #apbtn.on{color:#fff;border-color:#3fa9ff;box-shadow:0 0 18px 4px rgba(63,169,255,.85),inset 0 0 12px rgba(63,169,255,.5)}
 #aplabel{position:fixed;right:24px;bottom:86px;font:700 20px system-ui,sans-serif;letter-spacing:.12em;color:#7cc4ff;text-shadow:0 0 10px #1e7bff;opacity:0;transition:opacity .6s}
 #aplabel.show{opacity:1}.capture #apbtn,.capture #aplabel{display:none!important}#pmbtn{position:fixed;right:24px;bottom:150px;width:52px;height:52px;font:24px system-ui;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer}
@@ -14,34 +15,55 @@ body.photo.hideui #pmbar,body.photo.hideui #pmguide,body.photo.hideui #pmbtn,bod
 .capture #pmbtn,.capture #pmbar,.capture #pmguide{display:none!important}
 #toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);padding:10px 16px;font:600 14px system-ui,sans-serif;color:#e8f0ff;background:rgba(16,22,36,.88);border:1px solid #56627a;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .35s;z-index:20;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
-#helpbtn{position:fixed;left:24px;bottom:24px;width:44px;height:44px;font:700 20px system-ui;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer;z-index:15}
+#helpbtn{position:fixed;left:max(16px, env(safe-area-inset-left));bottom:max(16px, env(safe-area-inset-bottom));width:44px;height:44px;font:700 20px system-ui;color:#d8e6ff;background:rgba(20,26,40,.78);border:2px solid #56627a;border-radius:12px;cursor:pointer;z-index:15}
 #helppanel{position:fixed;left:24px;bottom:80px;display:none;width:min(360px,90vw);max-height:70vh;overflow:auto;padding:14px 16px;font:13px/1.45 system-ui,sans-serif;color:#d8e6ff;background:rgba(12,16,28,.92);border:1px solid #56627a;border-radius:12px;z-index:15;white-space:pre-wrap}
 #helppanel.show{display:block}
 .capture #toast,.capture #helpbtn,.capture #helppanel{display:none!important}
 body.photo #helpbtn,body.photo #helppanel{display:none!important}
+#hint{position:fixed;left:50%;bottom:max(28px, calc(18px + env(safe-area-inset-bottom)));transform:translateX(-50%);padding:8px 14px;font:600 15px system-ui,sans-serif;color:#ffe6c2;background:rgba(16,22,36,.82);border:1px solid #8a6a3a;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:12}
+#hint.show{opacity:1}
+#touch{display:none;position:fixed;inset:0;pointer-events:none;z-index:14}
+body.touch #touch{display:block}
+body.touch #helpbtn{left:max(12px, env(safe-area-inset-left));top:max(12px, env(safe-area-inset-top));bottom:auto}
+body.touch #hud{top:max(64px, calc(52px + env(safe-area-inset-top)))}
+body.touch #pmbtn{right:max(12px, env(safe-area-inset-right));top:max(12px, env(safe-area-inset-top));bottom:auto}
+body.touch #apbtn{bottom:calc(168px + env(safe-area-inset-bottom))}
+body.touch #aplabel{bottom:calc(230px + env(safe-area-inset-bottom))}
+body.touch #hint{bottom:calc(188px + env(safe-area-inset-bottom))}
+.capture #touch,.capture #hint,body.photo #touch,body.photo #hint{display:none!important}
+#stick{position:absolute;left:max(18px, env(safe-area-inset-left));bottom:max(18px, env(safe-area-inset-bottom));width:128px;height:128px;border-radius:50%;background:rgba(20,26,40,.45);border:2px solid rgba(180,198,230,.45);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:44px;top:44px;width:40px;height:40px;border-radius:50%;background:rgba(216,230,255,.9);box-shadow:0 0 12px rgba(80,140,255,.45)}
+#tbtns{position:absolute;right:max(14px, env(safe-area-inset-right));bottom:max(16px, env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3, 64px);gap:8px;pointer-events:auto}
+#tbtns button{height:56px;font:700 13px system-ui,sans-serif;color:#d8e6ff;background:rgba(20,26,40,.72);border:2px solid #56627a;border-radius:14px;touch-action:none}
+#tbtns button.held{color:#fff;border-color:#3fa9ff;background:rgba(40,70,120,.9)}
 </style></head>
-<body><canvas id="c"></canvas><div id="hud"></div><div id="aplabel">SELF-DRIVING</div><button id="pmbtn" title="Photo mode (O)">&#128247;</button><div id="pmguide"></div><div id="pmbar"><span id="pmratio">4:5</span><button id="pmframe">Framing (F)</button><button id="pmhide">Hide UI (H)</button><button id="pmsave">Save (Enter)</button><button id="pmexit">Exit (Esc)</button></div><button id="apbtn" title="Hotkey: P / Y on controller">Start Self-Driving</button>
+<body><canvas id="c"></canvas><div id="hud"></div><div id="hint"></div><div id="aplabel">SELF-DRIVING</div><button id="pmbtn" title="Photo mode (O)">&#128247;</button><div id="pmguide"></div><div id="pmbar"><span id="pmratio">4:5</span><button id="pmframe">Framing (F)</button><button id="pmhide">Hide UI (H)</button><button id="pmsave">Save (Enter)</button><button id="pmexit">Exit (Esc)</button></div><button id="apbtn" title="Hotkey: P / Y on controller">Start Self-Driving</button>
+<div id="touch"><div id="stick"><div id="knob"></div></div><div id="tbtns"><button type="button" data-act="up">Up</button><button type="button" data-act="boost">Boost</button><button type="button" data-act="down">Down</button><button type="button" data-act="float">Float</button><button type="button" data-act="grab">Grab</button><button type="button" data-act="use">Helm</button></div></div>
 <div id="toast"></div><button id="helpbtn" title="Controls (?)">?</button><div id="helppanel"></div>
 <script type="module">
 // URL: ?seed=1&w=1920&h=1080&view=follow|wide|window|cockpit  ; add &t=SEC to freeze on that sim time (used for stills), &hud=0 to hide HUD.
 // Interactive by default (WASD move, Space/C up/down, F float, mouse turns, Xbox gamepad). P / Y = Start Self-Driving.
 // &demo=1 plays the scripted seed pilot (as before). &manual=1 disables the RAF loop (window.dh drives ticks, for stills).
 // Capture mode (&capture=1, or window.cap present) hides the autopilot UI; capture.html itself never loads this page.
-import { reset, step, observe, state, DT } from './game.mjs'; import { makePilot, makeAutopilot, blendActions, HANDOFF_S } from './pilot.mjs'; import { createRenderer } from './render.mjs'; import * as THREE from './vendor/three.module.js';
-const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), fixedSize = !!(q.get('w') || q.get('h')), W = +(q.get('w') || innerWidth), H = +(q.get('h') || innerHeight);
+import { reset, step, observe, state, DT, SEAT_POS } from './game.mjs'; import { makePilot, makeAutopilot, blendActions, HANDOFF_S } from './pilot.mjs'; import { createRenderer } from './render.mjs'; import { buildWorld } from './world.mjs'; import * as THREE from './vendor/three.module.js';
+const q = new URLSearchParams(location.search), seed = +(q.get('seed') || 1), fixedSize = !!(q.get('w') || q.get('h'));
+const viewSize = () => { const vv = window.visualViewport; return [Math.round(vv ? vv.width : innerWidth), Math.round(vv ? vv.height : innerHeight)]; };
+const [vw, vh] = viewSize(), W = +(q.get('w') || vw), H = +(q.get('h') || vh);
 const view = q.get('view') || 'follow', T = q.get('t'), hud = document.getElementById('hud'); if (q.get('hud') === '0') hud.remove();
 const scripted = T != null || q.get('demo') === '1', capture = q.get('capture') === '1' || !!window.cap;
 const btn = document.getElementById('apbtn'), label = document.getElementById('aplabel');
 if (capture || scripted) document.body.classList.add('capture');
-const R = createRenderer(document.getElementById('c'), W, H, seed, { debug: q.get('colliders') === '1', freePlay: true }); // freePlay: v4 free-play-only camera rules (capture.html never sets it) // &colliders=1 or B: draw collision boxes
-// M2 flight runs in scripted/still mode (&t= or &demo=1); interactive play stays the M1 cabin sandbox (no manual ship controls yet). &m1=1 forces M1.
-reset(seed, { m1: !scripted || q.get('m1') === '1' }); const act = makePilot(state()); let o = observe();
+const R = createRenderer(document.getElementById('c'), W, H, seed, { debug: q.get('colliders') === '1', freePlay: true, pixelScale: !fixedSize }); // freePlay: v4 free-play-only camera rules (capture.html never sets it) // &colliders=1 or B: draw collision boxes
+// Interactive play is the M2 ship: walk the cabin, sit, and fly. &m1=1 keeps the old cabin-only sandbox. Stills and &demo=1 still run the seeded pilot.
+const playM1 = q.get('m1') === '1';
+reset(seed, { m1: playM1 }); const act = makePilot(state()); let o = observe();
+const flightWorld = playM1 ? null : buildWorld(seed);
 // ---- autopilot / Start Self-Driving
 let ap = null, apT = 0;
 let chimeCtx = null;
 function chime() { try { chimeCtx ||= new AudioContext(); if (chimeCtx.state === 'suspended') chimeCtx.resume().catch(() => {}); /* made on a pad press (not a user gesture): resume on the next chime */ const t = chimeCtx.currentTime, g = chimeCtx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); g.connect(chimeCtx.destination);
   for (const [f, d] of [[880, 0], [1318.5, 0.09]]) { const s = chimeCtx.createOscillator(); s.type = 'sine'; s.frequency.value = f; s.connect(g); s.start(t + d); s.stop(t + 0.5); } } catch {} }
-function engage() { if (ap || scripted) return; ap = makeAutopilot(o); apT = 0; btn.classList.add('on'); btn.textContent = 'Self-Driving On'; label.classList.add('show'); }
+function engage() { if (ap || scripted) return; if (o.mode === 'seat') { toast('Unbuckle (E) before Self-Driving'); return; } ap = makeAutopilot(o); apT = 0; btn.classList.add('on'); btn.textContent = 'Self-Driving On'; label.classList.add('show'); }
 function disengage(sound = true) { if (!ap) return; ap = null; btn.classList.remove('on'); btn.textContent = 'Start Self-Driving'; label.classList.remove('show'); if (sound) chime(); }
 const toggle = () => (ap ? disengage() : engage());
 // ---- toast + controls help
@@ -50,45 +72,66 @@ function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); 
 const HELP = `DRIFTHOME controls
 
 Keyboard / mouse
-  WASD — move / fly
-  Space / C (or Shift) — up / down
-  Mouse — look
+  WASD — move. In the helm: thrust, strafe
+  Arrows — turn (on foot and in the helm)
+  Space / C (or Shift) — up / down. Shift in the helm is boost
+  Mouse — look. Click the view to capture the cursor
   F — toggle float / walk
+  E — take the helm, unbuckle, or hold to grab a handhold
   P — Start Self-Driving
   B — show / hide collision boxes (debug)
   O — photo mode
   ? — this panel
 
+At the helm
+  W launches from the bay and lifts off the pad
+  Mouse or arrows steer the nose. Shift boosts
+  Land slowly on Ember's pad. Creep into the sky dock, nose first
+
 Xbox controller (standard mapping)
-  Left stick — move / fly
-  Right stick — look
+  Left stick — move / fly. In the helm: throttle and strafe
+  Right stick — look / steer
   RT — thrust forward (analog)
   LT — brake (analog)
-  RB / LB (or D-pad up / down) — up / down (zero-g)
+  RB / LB (or D-pad up / down) — up / down
   A — toggle float / walk
+  X — helm / handhold
+  B — boost (helm)
   Y — Start Self-Driving
   Menu — photo mode
   View — this panel
-  Stick / RT / LT — take over from Self-Driving`;
+  Stick / RT / LT — take over from Self-Driving
+
+Touch
+  Left stick moves. Drag the right side to look
+  Helm, Grab, Float, Up, Down, Boost sit on the right`;
 const helpPanel = document.getElementById('helppanel'), helpBtn = document.getElementById('helpbtn');
 helpPanel.textContent = HELP;
 function toggleHelp() { helpPanel.classList.toggle('show'); }
 helpBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleHelp(); helpBtn.blur(); });
 // ---- player input
-const keys = new Set(); let yawCmd = null, floatReq = false, mouseYaw = 0, mousePitch = 0;
-const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft', 'ShiftRight']);
+const keys = new Set(); let yawCmd = null, floatReq = false, interactReq = false, mouseYaw = 0, mousePitch = 0, useHeld = false;
+const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyC', 'KeyF', 'ShiftLeft', 'ShiftRight', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']);
 const DZ = 0.15;
-const padEdge = { y: false, a: false, menu: false, view: false }; let padKey = null;
+const padEdge = { y: false, a: false, x: false, menu: false, view: false }; let padKey = null;
+const helm = { yaw: 0, pitch: 0, ready: false };
+const touch = { axis: [0, 0], up: 0, boost: false, grab: false, lookId: null };
+const canvas = document.getElementById('c');
 addEventListener('keydown', (e) => {
+  try { chimeCtx ||= new AudioContext(); if (chimeCtx.state === 'suspended') chimeCtx.resume().catch(() => {}); } catch {}
   if (e.code === 'Slash' && e.shiftKey || e.key === '?') { if (!e.repeat) toggleHelp(); e.preventDefault(); return; }
   if (e.code === 'KeyP') { if (!e.repeat) toggle(); e.preventDefault(); return; }
   if (e.code === 'KeyB') { if (!e.repeat) toast(R.setDebug(!R.debug) ? 'Collision boxes on (B)' : 'Collision boxes off'); e.preventDefault(); return; }
+  if (e.code === 'KeyE') { disengage(); keys.add(e.code); e.preventDefault(); return; }
   if (MOVE_KEYS.has(e.code)) { disengage(); keys.add(e.code); if (e.code === 'KeyF' && !e.repeat) floatReq = true; e.preventDefault(); }
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 // a key held while the window loses focus (alt-tab, a dialog, clicking another window) never sends keyup: Bolt kept walking
 addEventListener('blur', () => keys.clear()); document.addEventListener('visibilitychange', () => { if (document.hidden) keys.clear(); });
-addEventListener('mousemove', (e) => { if (e.target === btn || (!e.movementX && !e.movementY)) return; disengage(); mouseYaw -= e.movementX * 0.004; });
+let touchLookUntil = 0;
+addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') touchLookUntil = performance.now() + 800; try { chimeCtx ||= new AudioContext(); chimeCtx.resume().catch(() => {}); } catch {} });
+addEventListener('mousemove', (e) => { if (performance.now() < touchLookUntil || pm.on || e.target === btn || (!e.movementX && !e.movementY)) return; disengage(); mouseYaw -= e.movementX * 0.004; mousePitch -= e.movementY * 0.003; });
+if (q.get('manual') !== '1') canvas.addEventListener('click', () => { if (performance.now() < touchLookUntil || pm.on || document.pointerLockElement) return; canvas.requestPointerLock?.(); });
 addEventListener('mousedown', (e) => { if (e.target !== btn && e.target !== helpBtn) disengage(); });
 btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); btn.blur(); });
 addEventListener('gamepadconnected', (e) => toast('Controller connected — Y: Self-Driving'));
@@ -105,19 +148,59 @@ function gamepad() {
   // zero-g up/down: RB or D-pad up = up, LB or D-pad down = down (was: no vertical control on the pad at all)
   const ud = Math.max(padVal(g.buttons[5]), padVal(g.buttons[12])) - Math.max(padVal(g.buttons[4]), padVal(g.buttons[13]));
   const raw = [g.axes[0] || 0, g.axes[1] || 0]; // left stick, radial deadzone below (playerAction)
-  const a = !!g.buttons[0]?.pressed, y = !!g.buttons[3]?.pressed, menu = !!g.buttons[9]?.pressed, view = !!g.buttons[8]?.pressed;
+  const a = !!g.buttons[0]?.pressed, y = !!g.buttons[3]?.pressed, x = !!g.buttons[2]?.pressed, b = !!g.buttons[1]?.pressed, menu = !!g.buttons[9]?.pressed, viewBtn = !!g.buttons[8]?.pressed;
   // edge-trigger face / menu / view
   if (y && !padEdge.y) toggle();
   if (a && !padEdge.a) floatReq = true;
+  if (x && !padEdge.x) { disengage(); interactReq = true; }
   if (menu && !padEdge.menu) pmToggle();
-  if (view && !padEdge.view) toggleHelp();
-  padEdge.y = y; padEdge.a = a; padEdge.menu = menu; padEdge.view = view;
+  if (viewBtn && !padEdge.view) toggleHelp();
+  padEdge.y = y; padEdge.a = a; padEdge.x = x; padEdge.menu = menu; padEdge.view = viewBtn;
   // handoff: stick past deadzone or triggers while Self-Driving
   if (ap && (ax0 || ax1 || ax2 || ax3 || lt > DZ || rt > DZ || ud)) disengage();
-  return { ax: [ax0, ax1, ax2, ax3], lt, rt, ud, raw };
+  return { ax: [ax0, ax1, ax2, ax3], lt, rt, ud, raw, b };
+}
+function seatDist(o) { return Math.hypot(o.pos[0] - SEAT_POS[0], o.pos[1] - SEAT_POS[1], o.pos[2] - SEAT_POS[2]); }
+function helmAction(o, gp) {
+  const f = o.ship.fwd;
+  if (!helm.ready) { const pitch = Math.asin(Math.max(-1, Math.min(1, f[1]))); helm.pitch = pitch; helm.yaw = Math.atan2(f[0], -f[2]); helm.ready = true; }
+  const steer = mouseYaw + ((keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0)) * 1.5 * DT + (gp ? (gp.ax[2] || 0) * 1.7 * DT : 0);
+  const pitchIn = mousePitch + ((keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0)) * 1.15 * DT + (gp ? (gp.ax[3] || 0) * 1.25 * DT : 0);
+  mouseYaw = 0; mousePitch = 0;
+  helm.yaw += steer; helm.pitch = Math.max(-1.15, Math.min(1.15, helm.pitch + pitchIn));
+  const cp = Math.cos(helm.pitch), sp = Math.sin(helm.pitch);
+  const face = [Math.sin(helm.yaw) * cp, sp, -Math.cos(helm.yaw) * cp];
+  const rx = -face[2], rz = face[0];
+  let throttle = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 0.55 : 0) + touch.axis[1];
+  let strafe = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0) + touch.axis[0];
+  let lift = (keys.has('Space') ? 1 : 0) - (keys.has('KeyC') ? 1 : 0) + touch.up;
+  if (gp) {
+    const sx = gp.raw ? gp.raw[0] : 0, sy = gp.raw ? gp.raw[1] : 0, rm = Math.hypot(sx, sy);
+    const sm = rm < DZ ? 0 : Math.min(1, (rm - DZ) / (1 - DZ));
+    if (rm > 1e-6) { throttle += sm * (-sy / rm); strafe += sm * (sx / rm); }
+    throttle += gp.rt || 0; if ((gp.lt || 0) > 0) throttle *= 1 - Math.min(1, gp.lt);
+    lift += gp.ud || 0;
+  }
+  throttle = Math.max(-0.7, Math.min(1, throttle)); strafe = Math.max(-1, Math.min(1, strafe)); lift = Math.max(-1, Math.min(1, lift));
+  const boost = throttle > 0.35 && (keys.has('ShiftLeft') || keys.has('ShiftRight') || touch.boost || !!(gp && gp.b));
+  const ship = { thrust: [face[0] * throttle + rx * strafe * 0.85, face[1] * throttle + lift, face[2] * throttle + rz * strafe * 0.85], face, boost };
+  if (o.ship.mode === 'home' && throttle > 0.2) ship.cmd = 'launch';
+  if (o.ship.mode === 'landed' && throttle > 0.2) ship.cmd = 'liftoff';
+  floatReq = false;
+  return { ship };
 }
 function playerAction(o, extra) {
   const k = (c) => (keys.has(c) ? 1 : 0), gp = extra === undefined ? gamepad() : extra;
+  const use = keys.has('KeyE');
+  if ((use && !useHeld) || interactReq) interactReq = true; else interactReq = false;
+  useHeld = use;
+  if (o.mode !== 'seat') mouseYaw += ((keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0)) * 1.8 * DT;
+  if (interactReq && o.ship) {
+    interactReq = false;
+    if (o.mode === 'seat') { helm.ready = false; return { mode: 'unbuckle' }; }
+    if ((o.mode === 'walk' || o.mode === 'float') && o.room === 'cockpit' && seatDist(o) < 1.55) return { mode: 'sit' };
+  } else interactReq = false;
+  if (o.mode === 'seat' && o.ship && !o.m1) return helmAction(o, gp);
   let f = k('KeyW') - k('KeyS'), s = k('KeyD') - k('KeyA'), u = k('Space') - k('KeyC') - Math.max(k('ShiftLeft'), k('ShiftRight'));
   let mag = null, brake = 0; // mag: analog strength 0..1 (null = keyboard: full)
   if (gp) {
@@ -130,9 +213,12 @@ function playerAction(o, extra) {
     u += gp.ud || 0;
     f = Math.max(-1, Math.min(1, f));
     mouseYaw -= (gp.ax[2] || 0) * 2 * DT;
-    mousePitch -= (gp.ax[3] || 0) * 1.5 * DT; // reserved; yaw is what the sim uses for look
+    mousePitch -= (gp.ax[3] || 0) * 1.5 * DT; // pitch is used by the helm; on foot only yaw turns Bolt
   }
-  const a = {}; if (o.mode === 'sleep' && (f || s || u || floatReq)) a.mode = 'wake';
+  if (touch.axis[0] || touch.axis[1]) { f += touch.axis[1]; s += touch.axis[0]; const tm = Math.min(1, Math.hypot(touch.axis[0], touch.axis[1])); mag = mag == null ? tm : Math.max(mag, tm); }
+  u += touch.up;
+  f = Math.max(-1, Math.min(1, f)); s = Math.max(-1, Math.min(1, s));
+  const a = {}; if (o.mode === 'sleep' && (f || s || u || floatReq || touch.grab)) a.mode = 'wake';
   if (floatReq) { a.mode = o.mode === 'float' ? 'walk' : o.mode === 'walk' ? 'float' : a.mode; floatReq = false; }
   const yaw = o.yaw + mouseYaw; mouseYaw = 0; mousePitch = 0;
   const fx = Math.cos(yaw), fz = -Math.sin(yaw), n = Math.hypot(f, s) || 1, g = (mag == null ? 1 : mag) / n;
@@ -140,14 +226,47 @@ function playerAction(o, extra) {
   if (brake > 0) { // walk: scales the move down; float: thrust against the current velocity, fading out near rest (never reverses)
     if (o.mode === 'float') { const v = o.vel, sp = Math.hypot(...v); if (sp > 1e-3) { const k = brake * Math.min(1, sp / 0.3); for (let i = 0; i < 3; i++) a.move[i] = a.move[i] * (1 - brake) - (v[i] / sp) * k; } }
     else for (const i of [0, 2]) a.move[i] *= 1 - brake; }
+  if (o.mode === 'float' && (keys.has('KeyE') || touch.grab) && (o.near_handhold >= 0 || o.grab)) a.grab = true;
   return a;
+}
+let eng = null;
+function engine(thrust, boost, on) {
+  if (!chimeCtx) return;
+  if (chimeCtx.state === 'suspended') chimeCtx.resume().catch(() => {});
+  if (!eng) { const osc = chimeCtx.createOscillator(), gain = chimeCtx.createGain(), filter = chimeCtx.createBiquadFilter(); osc.type = 'sawtooth'; osc.frequency.value = 52; filter.type = 'lowpass'; filter.frequency.value = 220; gain.gain.value = 0.0001; osc.connect(filter); filter.connect(gain); gain.connect(chimeCtx.destination); osc.start(); eng = { osc, gain, filter }; }
+  const t = chimeCtx.currentTime, sp = on ? Math.max(0, thrust) : 0;
+  eng.gain.gain.setTargetAtTime(on ? (boost ? 0.04 : 0.018) * (0.25 + 0.75 * Math.min(1, sp)) : 0.0001, t, 0.08);
+  eng.osc.frequency.setTargetAtTime(46 + sp * 36 + (boost ? 28 : 0), t, 0.1);
 }
 function tick(extraPad) {
   if (scripted) { o = step(act(o)).obs; return; }
   const pa = playerAction(o, extraPad);
   if (ap) { apT += DT; o = step(blendActions(pa, ap.act(o), Math.min(1, apT / HANDOFF_S))).obs; } else o = step(pa).obs;
+  if (o.mode === 'seat' && o.ship && o.ship.mode === 'flight') engine(Math.max(0, o.ship.thr), o.ship.boost, true);
+  else if (eng) engine(0, false, false);
 }
-const show = () => { R.render(o, view); if (hud.isConnected) hud.textContent = `DRIFTHOME · seed ${seed} · t=${o.t_s.toFixed(2)}s · ${o.mode} · ${o.room} · ${ap ? `self-driving→${ap.poi}${apT < HANDOFF_S ? ` (handoff ${Math.round(100 * apT / HANDOFF_S)}%)` : ''}` : (scripted ? 'demo' : 'player')} · ${(o.log.at(-1) || {}).type || ''}`; };
+function flightLine() {
+  if (!flightWorld || !o.ship || o.m1) return '';
+  const sh = o.ship, sp = Math.hypot(sh.vel[0], sh.vel[1], sh.vel[2]);
+  const alt = Math.hypot(sh.pos[0] - flightWorld.planet.c[0], sh.pos[1] - flightWorld.planet.c[1], sh.pos[2] - flightWorld.planet.c[2]) - flightWorld.planet.r;
+  const pad = Math.hypot(sh.pos[0] - flightWorld.pad.c[0], sh.pos[1] - flightWorld.padTop, sh.pos[2] - flightWorld.pad.c[2]);
+  const dock = Math.hypot(sh.pos[0] - flightWorld.dockTarget[0], sh.pos[1] - flightWorld.dockTarget[1], sh.pos[2] - flightWorld.dockTarget[2]);
+  return ` · ${sp.toFixed(0)} m/s · alt ${alt.toFixed(0)} m · pad ${pad.toFixed(0)} m · dock ${dock.toFixed(0)} m${sh.boost ? ' · BOOST' : ''}`;
+}
+const hintEl = document.getElementById('hint');
+function hint() {
+  if (!hintEl) return;
+  let msg = '';
+  if (!scripted && o.ship && !o.m1) {
+    if (o.mode === 'seat' && o.ship.mode === 'home') msg = 'W — launch';
+    else if (o.mode === 'seat' && o.ship.mode === 'landed') msg = 'W — lift off';
+    else if (o.mode === 'seat' && o.ship.mode === 'docked') msg = 'E — unbuckle';
+    else if (o.mode !== 'seat' && o.room === 'cockpit' && seatDist(o) < 1.55 && (o.mode === 'walk' || o.mode === 'float')) msg = 'E — take the helm';
+    else if (o.mode === 'float' && o.near_handhold >= 0) msg = o.grab ? 'Holding the handhold' : 'Hold E — grab the handhold';
+  }
+  hintEl.textContent = msg; hintEl.classList.toggle('show', !!msg);
+}
+const show = () => { R.render(o, view); hint(); if (hud.isConnected) hud.textContent = `DRIFTHOME · seed ${seed} · t=${o.t_s.toFixed(2)}s · ${o.mode} · ${o.room} · ${ap ? `self-driving→${ap.poi}${apT < HANDOFF_S ? ` (handoff ${Math.round(100 * apT / HANDOFF_S)}%)` : ''}` : (scripted ? 'demo' : 'player')}${o.mode === 'seat' && o.ship ? ' · ' + o.ship.mode + flightLine() : ''} · ${(o.log.at(-1) || {}).type || ''}`; };
 
 // ---- photo mode (O, camera button, or Menu on controller). Pauses the sim, free camera, framing guides, hi-res PNG save.
 const RATIOS = { '16:9': [3840, 2160], '4:5': [2160, 2700], '9:16': [2160, 3840] }, RKEYS = Object.keys(RATIOS);
@@ -167,7 +286,8 @@ function pmExit() { if (!pm.on) return; pm.on = false; pm.keys.clear(); keys.cle
 const pmToggle = () => (pm.on ? pmExit() : pmEnter());
 function pmCycle() { pm.ratio = RKEYS[(RKEYS.indexOf(pm.ratio) + 1) % RKEYS.length]; pmGuide(); }
 const pmHide = () => document.body.classList.toggle('hideui');
-function pmSnap(ratio = pm.ratio) { const r = R.renderer, gl = r.getContext(), [a, b] = RATIOS[ratio];
+function pmSnap(ratio = pm.ratio) { const r = R.renderer, gl = r.getContext(); let [a, b] = RATIOS[ratio];
+  if (document.body.classList.contains('touch')) { const limEdge = 1600, s = Math.min(1, limEdge / Math.max(a, b)); a = Math.round(a * s); b = Math.round(b * s); }
   const lim = Math.min(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE), ...gl.getParameter(gl.MAX_VIEWPORT_DIMS), r.capabilities.maxTextureSize);
   let k = Math.min(1, lim / Math.max(a, b)), w, h; const pr = r.getPixelRatio(), old = r.getSize(new THREE.Vector2());
   for (let i = 0; i < 6; i++) { w = Math.floor(a * k); h = Math.floor(b * k); r.setPixelRatio(1); r.setSize(w, h, false);
@@ -192,7 +312,10 @@ addEventListener('mousemove', (e) => { if (!pm.on) return; e.stopImmediatePropag
 addEventListener('wheel', (e) => { if (!pm.on) return; e.preventDefault(); pm.cam.fov = Math.max(12, Math.min(100, pm.cam.fov * Math.exp(e.deltaY * 0.001))); }, { capture: true, passive: false });
 addEventListener('resize', () => pm.on && pmGuide());
 // follow the window size unless ?w= / ?h= pinned it (stills, captures); photo mode re-renders, play shows the next frame
-if (!fixedSize) addEventListener('resize', () => { if (R.resize(innerWidth, innerHeight)) { if (pm.on) pmRender(); else show(); } });
+if (!fixedSize) {
+  const onResize = () => { const [w, h] = viewSize(); if (R.resize(w, h)) { if (pm.on) pmRender(); else show(); } };
+  addEventListener('resize', onResize); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
+}
 function pmTick(dt) { const k = (c) => (pm.keys.has(c) ? 1 : 0), sp = (pm.keys.has('ShiftLeft') || pm.keys.has('ShiftRight') ? 0.4 : 2.2) * dt;
   const v = new THREE.Vector3(k('KeyD') - k('KeyA'), 0, k('KeyS') - k('KeyW')); if (v.lengthSq()) pm.cam.position.add(v.normalize().applyQuaternion(pm.cam.quaternion).multiplyScalar(sp));
   pm.roll += (k('KeyE') - k('KeyQ')) * 1.2 * dt * (sp < 0.05 ? 0.3 : 1); pmRender(); }
@@ -205,5 +328,41 @@ window.dh = { debug: (v) => R.setDebug(v), get cam() { return { pos: R.camera.po
   tick(n = 1, inp = {}) { keys.clear(); (inp.keys || []).forEach(c => keys.add(c)); if (inp.float) floatReq = true; for (let i = 0; i < n; i++) tick(inp.pad ? undefined : null); /* inp.pad: read navigator.getGamepads() like live play */ keys.clear(); if (!inp.noshow) show(); return observe(); } };
 if (T != null) { while (o.t_s < +T) o = step(act(o)).obs; show(); document.title = 'READY'; }
 else if (q.get('manual') === '1') { show(); document.title = 'READY'; }
-else { let acc = 0, last = performance.now(); const loop = (now) => { acc += Math.min(0.25, (now - last) / 1000); last = now; if (pm.on) { gamepad(); /* edge: Menu exits photo, View toggles help */ pmTick(Math.min(0.1, acc)); acc = 0; } else { while (acc >= DT) { tick(); acc -= DT; } show(); } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+else { let acc = 0, last = performance.now(); const loop = (now) => {
+  const gap = (now - last) / 1000; last = now;
+  // a long gap (tab hidden, phone lock) is dropped instead of simulating a quarter-second lurch
+  if (!document.hidden && gap < 0.25) acc += gap; else acc = 0;
+  if (document.hidden) keys.clear();
+  if (pm.on) { gamepad(); /* edge: Menu exits photo, View toggles help */ pmTick(Math.min(0.1, Math.max(gap, 0))); acc = 0; }
+  else { let guard = 0; while (acc >= DT && guard++ < 8) { tick(); acc -= DT; } show(); }
+  requestAnimationFrame(loop);
+}; requestAnimationFrame(loop); if (!playM1) setTimeout(() => { try { R.preloadSpace(o); } catch (e) { console.warn('space preload', e); } }, 1400); }
+// ---- touch (phones and tablets, or ?touch=1). Mouse and gamepad paths are unchanged.
+const touchOn = q.get('touch') === '1' || (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) || ((navigator.maxTouchPoints || 0) > 0 && Math.min(innerWidth, innerHeight) < 820);
+if (touchOn && !capture && !scripted) document.body.classList.add('touch');
+const stick = document.getElementById('stick'), knob = document.getElementById('knob');
+function setKnob(x, y) { knob.style.transform = `translate(${x * 40}px, ${y * 40}px)`; }
+stick.addEventListener('pointerdown', (e) => { stick.setPointerCapture(e.pointerId); stick.dataset.pid = String(e.pointerId); disengage(); placeStick(e); e.preventDefault(); });
+stick.addEventListener('pointermove', (e) => { if (stick.dataset.pid !== String(e.pointerId)) return; placeStick(e); });
+function endStick(e) { if (stick.dataset.pid !== String(e.pointerId)) return; stick.dataset.pid = ''; touch.axis = [0, 0]; setKnob(0, 0); }
+stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
+function placeStick(e) { const r = stick.getBoundingClientRect(); let x = (e.clientX - (r.left + r.width / 2)) / 46, y = (e.clientY - (r.top + r.height / 2)) / 46; const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; } touch.axis = [x, -y]; setKnob(x, y); }
+for (const b of document.querySelectorAll('#tbtns button')) b.addEventListener('pointerdown', (e) => {
+  e.preventDefault(); e.stopPropagation(); b.setPointerCapture?.(e.pointerId); b.classList.add('held'); disengage(); try { chimeCtx ||= new AudioContext(); chimeCtx.resume().catch(() => {}); } catch {}
+  const actName = b.dataset.act;
+  if (actName === 'up') touch.up = 1; else if (actName === 'down') touch.up = -1; else if (actName === 'boost') touch.boost = true; else if (actName === 'grab') touch.grab = true; else if (actName === 'float') floatReq = true; else if (actName === 'use') interactReq = true;
+});
+const releaseTouchBtn = (b) => { b.classList.remove('held'); const actName = b.dataset.act; if (actName === 'up' || actName === 'down') touch.up = 0; else if (actName === 'boost') touch.boost = false; else if (actName === 'grab') touch.grab = false; };
+for (const b of document.querySelectorAll('#tbtns button')) { b.addEventListener('pointerup', () => releaseTouchBtn(b)); b.addEventListener('pointercancel', () => releaseTouchBtn(b)); }
+canvas.addEventListener('pointerdown', (e) => {
+  if (!document.body.classList.contains('touch') || e.pointerType === 'mouse') return;
+  if (e.target !== canvas) return;
+  touch.lookId = e.pointerId; touch.lx = e.clientX; touch.ly = e.clientY; try { chimeCtx ||= new AudioContext(); } catch {}
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== touch.lookId || pm.on) return;
+  mouseYaw -= (e.clientX - touch.lx) * 0.005; mousePitch -= (e.clientY - touch.ly) * 0.0035; touch.lx = e.clientX; touch.ly = e.clientY; disengage();
+});
+canvas.addEventListener('pointerup', (e) => { if (e.pointerId === touch.lookId) touch.lookId = null; });
+canvas.addEventListener('pointercancel', (e) => { if (e.pointerId === touch.lookId) touch.lookId = null; });
 </script></body></html>

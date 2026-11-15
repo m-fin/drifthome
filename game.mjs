@@ -177,14 +177,23 @@ export function step(a = {}) {
   if (a.mode === 'wake' && s.mode === 'sleep') { s.mode = 'walk'; emit('wake', { room: 'cabin' }); }
   if (a.mode === 'float' && s.mode === 'walk') { s.mode = 'float'; s.gravity = false; emit('float_start', { pos: s.pos.map(x => +x.toFixed(2)) }); }
   if (a.mode === 'walk' && s.mode === 'float') { s.mode = 'walk'; s.gravity = true; }
-  if (a.mode === 'sit' && s.mode === 'float' && room(s.pos) === 'cockpit') { s.mode = 'seat'; s.vel = [0, 0, 0]; }
-  if (a.mode === 'unbuckle' && s.mode === 'seat') { s.mode = 'float'; s.pos = [0, 1.25, -6.7]; s.vel = [0, 0, 0.3]; }
+  // sit from a walk too: the pilot only sits after floating, so seeded runs never take this branch
+  if (a.mode === 'sit' && (s.mode === 'float' || s.mode === 'walk') && room(s.pos) === 'cockpit') { s.mode = 'seat'; s.gravity = false; s.vel = [0, 0, 0]; }
+  if (a.mode === 'unbuckle' && s.mode === 'seat') { s.mode = 'float'; s.gravity = false; s.pos = [0, 1.25, -6.7]; s.vel = [0, 0, 0.3]; }
   shipStep(s, a.ship || {}, emit);
   const m = a.move || [0, 0, 0];
+  s.grab = false;
   if (s.mode === 'walk') {
     s.vel[0] = m[0] * 1.6; s.vel[2] = m[2] * 1.6; s.vel[1] -= 9.8 * DT;
   } else if (s.mode === 'float') {
-    for (let i = 0; i < 3; i++) { s.vel[i] += m[i] * 2.2 * DT; s.vel[i] *= 0.985; const c = 1.8; if (s.vel[i] > c) s.vel[i] = c; if (s.vel[i] < -c) s.vel[i] = -c; }
+    // 1.7 m, not the 0.9 m "near" test: the hang point sits 1.25 m under the ring so Bolt's head clears the torus
+    const held = a.grab ? LAYOUT.handholds.find(h => Math.hypot(h[0] - s.pos[0], h[1] - s.pos[1], h[2] - s.pos[2]) < 1.7) : null;
+    if (held) { // the pilot never sets grab, so seeded runs skip this
+      const target = [held[0], held[1] - 1.25, held[2]];
+      for (let i = 0; i < 3; i++) s.vel[i] = (target[i] - s.pos[i]) * 3.5;
+      const sp = Math.hypot(s.vel[0], s.vel[1], s.vel[2]); if (sp > 1.6) for (let i = 0; i < 3; i++) s.vel[i] *= 1.6 / sp;
+      s.grab = true;
+    } else for (let i = 0; i < 3; i++) { s.vel[i] += m[i] * 2.2 * DT; s.vel[i] *= 0.985; const c = 1.8; if (s.vel[i] > c) s.vel[i] = c; if (s.vel[i] < -c) s.vel[i] = -c; }
   } else s.vel = [0, 0, 0];
   if (s.mode === 'seat') { for (let i = 0; i < 3; i++) s.pos[i] += (SEAT_POS[i] - s.pos[i]) * Math.min(1, 4 * DT); a = { ...a, look: Math.PI / 2 }; }
   for (let i = 0; i < 3; i++) s.pos[i] += s.vel[i] * DT;
@@ -202,7 +211,7 @@ export function step(a = {}) {
 }
 export function observe() {
   const s = S; return { tick: s.tick, t_s: +s.t.toFixed(4), mode: s.mode, room: room(s.pos), gravity: s.gravity, pos: [...s.pos], vel: [...s.vel], yaw: s.yaw,
-    near_handhold: LAYOUT.handholds.findIndex(h => Math.hypot(h[0] - s.pos[0], h[1] - s.pos[1], h[2] - s.pos[2]) < 0.9), flags: { ...s.flags }, log: s.log,
+    near_handhold: LAYOUT.handholds.findIndex(h => Math.hypot(h[0] - s.pos[0], h[1] - s.pos[1], h[2] - s.pos[2]) < 0.9), grab: !!s.grab, flags: { ...s.flags }, log: s.log,
     ship: { mode: s.ship.mode, pos: [...s.ship.pos], vel: [...s.ship.vel], fwd: [...s.ship.fwd], bank: s.ship.bank, boost: s.ship.boost, thr: s.ship.thr }, m1: s.m1 };
 }
 export const state = () => S;
