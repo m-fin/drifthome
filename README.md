@@ -6,6 +6,8 @@ Plain JavaScript and [three.js](https://threejs.org/) 0.186.1, vendored in `vend
 
 ## Play
 
+**[Play DRIFTHOME](https://m-fin.github.io/drifthome/)** in the browser.
+
 Keyboard, mouse, Xbox-style gamepad, or touch.
 
 | | |
@@ -29,7 +31,7 @@ python3 -m http.server 8765
 # http://127.0.0.1:8765/
 ```
 
-GitHub Pages is not turned on for this repo yet. `.github/workflows/pages.yml` publishes the game when Pages is set to GitHub Actions; the address will be <https://m-fin.github.io/drifthome/>.
+The same page is at <https://m-fin.github.io/drifthome/>. `.github/workflows/pages.yml` publishes it on each push to `main`.
 
 Useful query flags: `?seed=1`, `&m1=1` for the cabin-only sandbox, `&demo=1` to watch the scripted flight, `&hud=0` to hide the HUD.
 
